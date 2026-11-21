@@ -3,6 +3,14 @@
 set -eu
 export LC_ALL=C
 qemu=./$1
+firmware=./$3
+
+for rom in bios-256k.bin pvh.bin kvmvapic.bin linuxboot_dma.bin multiboot_dma.bin; do
+    if [ ! -s "$firmware/$rom" ]; then
+        printf 'Missing boot firmware: %s\n' "$rom" >&2
+        exit 1
+    fi
+done
 
 version=$("$qemu" --version)
 case "$version" in
@@ -44,8 +52,14 @@ EOF
 }
 
 case "$2" in
-    q35-only) check_machines absent ;;
-    qemu-default) check_machines present ;;
+    q35-only)
+        check_machines absent
+        test ! -e "$firmware/vgabios-stdvga.bin"
+        ;;
+    qemu-default)
+        check_machines present
+        test -s "$firmware/vgabios-stdvga.bin"
+        ;;
     custom) ;;
     *) printf 'Unexpected device set: %s\n' "$2" >&2; exit 1 ;;
 esac

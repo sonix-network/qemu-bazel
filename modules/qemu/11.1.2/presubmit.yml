@@ -24,6 +24,7 @@ bcr_test_module:
         - --action_env=PATH=/nonexistent
         - --host_action_env=PATH=/nonexistent
       build_targets:
+        - "@qemu//:firmware"
         - "@qemu//:qemu-system-x86_64"
         - "@qemu//:qemu-system-x86_64_info"
         - "@qemu//:qemu-img"

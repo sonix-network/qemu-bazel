@@ -56,6 +56,49 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# These files are loaded by QEMU's PC system firmware, direct-kernel boot
+# paths, and optional VAPIC ROM. Device ROMs follow the same Kconfig symbols
+# as the sources that register them, so the directory follows the profile.
+_ROM_BY_DEVICE = {
+    "ATI_VGA": ["vgabios-ati.bin"],
+    "BOCHS_DISPLAY": ["vgabios-bochs-display.bin"],
+    "E1000_PCI": ["efi-e1000.rom", "pxe-e1000.rom"],
+    "E1000E_PCI_EXPRESS": ["efi-e1000e.rom"],
+    "EEPRO100_PCI": ["efi-eepro100.rom", "pxe-eepro100.rom"],
+    "FW_CFG_DMA": ["vgabios-ramfb.bin"],
+    "MICROVM": ["bios-microvm.bin", "qboot.rom"],
+    "NE2000_PCI": ["efi-ne2k_pci.rom", "pxe-ne2k_pci.rom"],
+    "PCNET_PCI": ["efi-pcnet.rom", "pxe-pcnet.rom"],
+    "QXL": ["vgabios-qxl.bin"],
+    "RTL8139_PCI": ["efi-rtl8139.rom", "pxe-rtl8139.rom"],
+    "VGA_CIRRUS": ["vgabios-cirrus.bin"],
+    "VGA_ISA": ["vgabios.bin"],
+    "VGA_PCI": ["vgabios-stdvga.bin"],
+    "VIRTIO_NET": ["efi-virtio.rom", "pxe-virtio.rom"],
+    "VIRTIO_VGA": ["vgabios-virtio.bin"],
+    "VMWARE_VGA": ["vgabios-vmware.bin"],
+    "VMXNET3_PCI": ["efi-vmxnet3.rom"],
+}
+
+_PC_BOOT_ROMS = ["bios-256k.bin", "bios.bin", "kvmvapic.bin", "linuxboot_dma.bin", "multiboot_dma.bin", "pvh.bin"]
+_X86_CONFIG = TARGETS["x86_64-softmmu"]
+
+python_gen(
+    name = "firmware",
+    srcs = ["pc-bios/" + rom for rom in _PC_BOOT_ROMS + [
+        rom
+        for device, roms in _ROM_BY_DEVICE.items()
+        if _X86_CONFIG.get("CONFIG_" + device) == "y"
+        for rom in roms
+    ]],
+    arguments = ["{out}", "{inputs}"],
+    directory = "firmware",
+    package_metadata = [],
+    script = "//bazel:firmware.py",
+    target_compatible_with = _LINUX_X86_64,
+    visibility = ["//visibility:public"],
+)
+
 ###########################
 # Configuration headers   #
 ###########################
@@ -459,8 +502,8 @@ _SMOKE_DEVICE_SET = (
 sh_test(
     name = "kvm_smoke_test",
     srcs = [":kvm_smoke_script"],
-    args = ["$(rootpath :qemu-system-x86_64)", _SMOKE_DEVICE_SET],
-    data = [":qemu-system-x86_64"],
+    args = ["$(rootpath :qemu-system-x86_64)", _SMOKE_DEVICE_SET, "$(rootpath :firmware)"],
+    data = [":firmware", ":qemu-system-x86_64"],
     target_compatible_with = _LINUX_X86_64,
 )
 

@@ -47,9 +47,10 @@ land. They are normal `bazel_dep` dependencies, not private archive repos.
 The smoke test checks version, KVM, device and trace registration. It also
 requires q35 and rejects i440FX in `minimal`; it requires both in `default`.
 It does not need `/dev/kvm` and does not boot a guest. To run a
-VM, supply `/dev/kvm` and use `-L /path/to/qemu/pc-bios` for the release's
-prebuilt firmware. The module does not install QEMU, build firmware, or package
-a runtime. Use `--distdir` to point Bazel at a locally downloaded archive if
+VM, supply `/dev/kvm` and build `@qemu//:firmware`. Pass that target's
+output directory to `-L`; it contains the release's prebuilt x86 PC boot
+ROMs and additional device ROMs selected by the configured Kconfig symbols.
+The module does not install QEMU or rebuild the firmware. Use `--distdir` to point Bazel at a locally downloaded archive if
 needed; the [release and overlay pins](modules/qemu/11.1.2/source.json) still
 apply.
 
@@ -103,12 +104,12 @@ Its PVH entry note points to a small 32-bit trampoline that enters long mode
 before calling Rust. The test requires exactly `hello from x86_64` on COM1
 and QEMU exit status 85 from `isa-debug-exit`.
 
-PVH direct boot still uses firmware. The example stages `bios-256k.bin`
-(SeaBIOS) and `pvh.bin` (the PVH option ROM) from the SHA-256-pinned QEMU
-11.1.2 release and passes their runfiles directory via `-L`. It also stages
-`kvmvapic.bin`: QEMU requests this optional ROM and warns if it is missing,
-although the PVH guest does not need it. The example uses no host firmware
-installation, disk image, or network.
+PVH direct boot still uses firmware. The example uses `@qemu//:firmware`
+as the toolchain's data directory and passes it via `-L`. Both profiles
+provide `bios-256k.bin` (SeaBIOS), `pvh.bin` (the PVH option ROM), and
+`kvmvapic.bin` (the optional VAPIC ROM) from the SHA-256-pinned QEMU release.
+The example needs no firmware copy rule, host installation, disk image,
+or network.
 
 The runtime test is tagged `manual` and `requires-kvm`: wildcard test runs
 and the build-only example presubmit do not boot it. Run it explicitly on

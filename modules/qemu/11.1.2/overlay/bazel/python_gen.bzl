@@ -11,6 +11,12 @@ def _python_gen_impl(ctx):
         fail("QEMU generators need a file-backed Python toolchain")
     args = ctx.actions.args()
     outs = ctx.outputs.outs
+    if ctx.attr.directory:
+        if outs or ctx.attr.capture_stdout:
+            fail("directory output cannot be combined with outs or capture_stdout")
+        outs = [ctx.actions.declare_directory(ctx.attr.directory)]
+    elif not outs:
+        fail("expected outs or a directory output")
     if ctx.attr.capture_stdout:
         if len(outs) != 1:
             fail("capture_stdout needs exactly one output")
@@ -52,7 +58,8 @@ python_gen = rule(
         "arguments": attr.string_list(),
         "capture_stdout": attr.bool(),
         "deps": attr.label_list(allow_files = True),
-        "outs": attr.output_list(mandatory = True),
+        "directory": attr.string(),
+        "outs": attr.output_list(),
         "script": attr.label(allow_single_file = True, mandatory = True),
         "src": attr.label(allow_single_file = True),
         "srcs": attr.label_list(allow_files = True),

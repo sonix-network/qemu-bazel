@@ -10,8 +10,10 @@ toolchain rules, and consumers supply a static-capable C toolchain.
 The checked-in BUILD files describe QEMU's source sets. Device selection
 runs QEMU's Kconfig generator under rules_python's managed host interpreter;
 other generators run in build actions. The emulator, its build information,
-release `pc-bios` files, package metadata, and Linux x86-64 `qemu-img` for the
-`rules_qemu` adapter are public. Other binaries and build targets are internal.
+`@qemu//:firmware` (a `-L` directory), raw release `pc-bios` files, package
+metadata, and Linux x86-64 `qemu-img` for the `rules_qemu` adapter are public.
+The directory stages SeaBIOS, the PVH and VAPIC ROMs, and release device ROMs
+selected by the configured Kconfig symbols. Other build targets are internal.
 
 GLib, PCRE2, and libslirp resolve through Bzlmod. The GLib and PCRE2 registry
 revisions support the static musl build without private copies or registry

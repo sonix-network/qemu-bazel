@@ -5,3 +5,5 @@ exports_files([
     "kvm_smoke.sh",
     "source_provenance.json",
 ], visibility = ["//:__subpackages__"])
+
+exports_files(["firmware.py"], visibility = ["//:__pkg__"])
