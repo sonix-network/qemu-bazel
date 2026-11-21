@@ -60,8 +60,8 @@ rust.repository_set(
     target_triple = "x86_64-pc-windows-msvc",
     versions = ["1.91.1"],
 )
-# Use the Windows Rust compiler with the GNU target and Zig linker for
-# native binaries. The bare-metal target uses Rust's bundled rust-lld.
+# The Windows compiler's bundled rust-lld links both the native GNU target
+# (with Rust's self-contained MinGW libraries) and the bare-metal ELF.
 rust.repository_set(
     name = "rust_windows_x86_64",
     target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:windows"],
