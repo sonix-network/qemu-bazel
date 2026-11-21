@@ -3,6 +3,7 @@ module(name = "qemu_bare_metal_rust_example")
 bazel_dep(name = "qemu", version = "11.1.2")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_rust", version = "0.72.0")
+bazel_dep(name = "rules_python", version = "2.5.1")
 bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.3.0")
@@ -33,44 +34,19 @@ register_toolchains(
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(extra_target_triples = [], versions = ["1.91.1"])
 
-# Replace rules_rust's default Linux x86-64 set. The host C library constraint
-# prevents GNU and musl Rust toolchains from matching the same platform.
 rust.repository_set(
     name = "rust_linux_x86_64",
-    exec_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"],
     exec_triple = "x86_64-unknown-linux-gnu",
-    target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:gnu.2.38"],
-    target_triple = "x86_64-unknown-linux-gnu",
-    versions = ["1.91.1"],
-)
-rust.repository_set(
-    name = "rust_linux_x86_64",
-    target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"],
-    target_triple = "x86_64-unknown-linux-musl",
-)
-rust.repository_set(
-    name = "rust_linux_x86_64",
     target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:none"],
     target_triple = "x86_64-unknown-none",
+    versions = ["1.91.1"],
 )
 rust.repository_set(
     name = "rust_windows_x86_64",
     exec_triple = "x86_64-pc-windows-msvc",
-    target_compatible_with = ["@platforms//:incompatible"],
-    target_triple = "x86_64-pc-windows-msvc",
-    versions = ["1.91.1"],
-)
-# The Windows compiler's bundled rust-lld links both the native GNU target
-# (with Rust's self-contained MinGW libraries) and the bare-metal ELF.
-rust.repository_set(
-    name = "rust_windows_x86_64",
-    target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:windows"],
-    target_triple = "x86_64-pc-windows-gnu",
-)
-rust.repository_set(
-    name = "rust_windows_x86_64",
     target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:none"],
     target_triple = "x86_64-unknown-none",
+    versions = ["1.91.1"],
 )
 use_repo(rust, "rust_toolchains")
 register_toolchains("@rust_toolchains//:all")

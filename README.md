@@ -136,7 +136,7 @@ bazel test --test_strategy=standalone --test_output=all //:x86_64_uart_test
 
 [`example/`](example/) pins Rust 1.91.1 with `rules_rust`. A platform transition
 builds the `no_std` guest for `x86_64-unknown-none` with the pinned `rust-lld`.
-The test runner and QEMU are native x86-64 executables. The `rules_qemu`
+The Python test runs the native x86-64 QEMU executable. The `rules_qemu`
 adapter resolves the source-built emulator, firmware and accelerator for the
 execution platform. Linux uses pinned Zig/musl with KVM. Windows uses pinned
 Zig/MinGW with WHPX.
@@ -155,7 +155,7 @@ although the PVH guest does not need it. The example uses no host firmware
 installation, disk image, or network.
 
 The test is tagged `manual` and the example workflow invokes it explicitly.
-It prints `SKIP` if it cannot open `/dev/kvm` on Linux or create a WHPX
+It reports a skip if it cannot open `/dev/kvm` on Linux or create a WHPX
 partition on Windows. On Linux, the standalone test strategy exposes `/dev/kvm`
 to the test. Build actions still use the restricted action environment.
 

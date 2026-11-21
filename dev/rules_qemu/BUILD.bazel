@@ -47,5 +47,5 @@ py_test(
     main = "system_probe.py",
     args = ["$(rlocationpath :system_probe_data)"],
     data = [":system_probe_data"],
-    deps = ["@rules_python//python/runfiles"],
+    deps = ["//probe:accelerator", "@rules_python//python/runfiles"],
 )

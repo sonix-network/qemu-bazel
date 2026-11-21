@@ -1,6 +1,7 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@qemu_rules_qemu_example//:source_toolchain.bzl", "source_toolchain")
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@rules_rust//rust/private:rust.bzl", "rust_binary_without_process_wrapper")
 load(":qemu_runfiles.bzl", "qemu_runfiles")
 
 _LINUX = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
@@ -17,7 +18,9 @@ platform(
     constraint_values = _GUEST,
 )
 
-rust_binary(
+# The guest is a single no_std crate. The pinned rules_rust bootstrap rule
+# can compile it without linking a native Rust process wrapper on Windows.
+rust_binary_without_process_wrapper(
     name = "hello_x86_64",
     srcs = ["hello_x86_64.rs"],
     compile_data = ["pvh.ld"],
@@ -63,14 +66,15 @@ qemu_runfiles(
     guest = ":hello_x86_64",
 )
 
-rust_test(
+py_test(
     name = "x86_64_uart_test",
     size = "small",
-    srcs = ["x86_64_uart_test.rs"],
-    args = ["--nocapture"],
+    srcs = ["x86_64_uart_test.py"],
+    args = ["$(rlocationpath :boot_inputs)"],
     data = [":boot_inputs"],
-    edition = "2021",
-    rustc_env = {"BOOT_INPUTS": "$(rlocationpath :boot_inputs)"},
     tags = ["manual"],
-    deps = ["@rules_rust//rust/runfiles"],
+    deps = [
+        "@qemu_rules_qemu_example//probe:accelerator",
+        "@rules_python//python/runfiles",
+    ],
 )
