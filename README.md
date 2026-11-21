@@ -56,6 +56,17 @@ bazel build @qemu//:qemu-system-x86_64
 bazel test @qemu//:whpx_smoke_test
 ```
 
+If `launcher_maker.exe` fails with exit code `-1073741515`, add the
+directory containing the x64 Visual C++ runtime DLLs to your PowerShell
+session's `PATH`. Bazel's embedded JDK includes these DLLs. For a session
+without a machine-wide runtime installation, run:
+
+```powershell
+$installBase = bazel info install_base
+$env:Path = "$installBase\embedded_tools\jdk\bin;$env:Path"
+bazel test @qemu//:whpx_smoke_test
+```
+
 The registration test runs version and help commands without launching a
 guest. A guest run requires the Windows Hypervisor Platform feature
 (`HypervisorPlatform`), a running hypervisor accessible to the emulator,
@@ -74,8 +85,9 @@ manifest target applies to the Linux binary.
 ## Configure the module
 
 With no configuration tag, `minimal` seeds Kconfig with `CONFIG_Q35=y`
-and enables only what it selects. Run it with `-machine q35`; the i440FX `pc`
-alias is not built. It does not enable Pixman or SLIRP and uses `nop` tracing.
+and `CONFIG_ISA_DEBUG=y` for the example guest. Run it with `-machine q35`.
+This profile omits the i440FX `pc` alias, Pixman, and SLIRP, and uses `nop`
+tracing.
 Choose `default` explicitly to use QEMU's own default
 x86-64 device configs (including q35 and i440FX), Pixman, SLIRP, and `simple`
 tracing:
@@ -133,7 +145,8 @@ separate `LGPL-2.1-or-later` declaration. This replaces the QEMU module's direct
 ## Validation and developer tools
 
 Both developer workspaces built with Bazel 9.3.2 and Zig/musl, and both passed
-`@qemu//:kvm_smoke_test`.
+`@qemu//:kvm_smoke_test`. These Linux measurements predate the addition of
+`CONFIG_ISA_DEBUG` to `minimal`.
 
 | Profile | Resolved device symbols | Stripped static ELF |
 | --- | ---: | ---: |

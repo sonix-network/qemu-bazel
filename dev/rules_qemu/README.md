@@ -3,7 +3,8 @@
 The adapter consumes `@qemu//toolchain:type` and provides the
 `rules_qemu` 0.3.0 system toolchain. The same test target uses Linux/KVM or
 Windows/WHPX according to the execution platform. It checks the emulator and
-`qemu-img`, then boots a small real-mode guest and checks its serial output.
+`qemu-img`, then boots a small real-mode guest and checks its COM1 output
+and `isa-debug-exit` status (85).
 The boot case reports a skip when the accelerator is unavailable.
 
 From this directory on Linux or Windows x86-64, run:

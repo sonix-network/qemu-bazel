@@ -42,6 +42,8 @@ bcr_test_module:
       test_flags:
         - --jobs=4
         - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+        - --action_env=PATH
+        - --test_env=PATH
       build_targets:
         - "@qemu//:qemu-system-x86_64"
       test_targets:

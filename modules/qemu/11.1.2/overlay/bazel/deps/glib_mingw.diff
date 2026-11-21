@@ -102,7 +102,7 @@ diff --git a/config.h-windows b/config.h-windows
   * The UCRT provides all three.
   */
  #define HAVE__SET_INVALID_PARAMETER_HANDLER 1
-+/* Zig's Windows GNU target uses MSVCRT, which lacks this UCRT API. */
++/* Zig's MinGW headers don't declare the thread-local handler. */
 +#ifdef __MINGW32__
 +#define HAVE_DIRENT_H 1
 +#else

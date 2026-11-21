@@ -1,5 +1,7 @@
 build:linux --jobs=2
 build:windows --jobs=4
+test:windows --action_env=PATH
+test:windows --test_env=PATH
 build:linux --platforms=//:linux_x86_64_musl
 build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 build:linux --incompatible_strict_action_env

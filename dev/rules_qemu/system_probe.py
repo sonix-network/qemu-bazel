@@ -7,7 +7,6 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 
 from python.runfiles import runfiles
@@ -69,7 +68,7 @@ class SystemProbe(unittest.TestCase):
             directory = Path(directory)
             disk = directory / "boot.img"
             serial = directory / "serial.log"
-            # In real mode, write a marker to the first serial port and halt.
+            # In real mode, write a marker to COM1 and exit with (0x2a << 1) | 1.
             marker = b"QEMU boot OK"
             code = bytearray(bytes.fromhex(
                 "ba fb 03 b0 03 ee "  # COM1 line control: 8 data bits, DLAB off
@@ -77,31 +76,24 @@ class SystemProbe(unittest.TestCase):
             ))
             for byte in marker:
                 code.extend((0xB0, byte, 0xEE))  # mov al, byte; out dx, al
-            code.extend(bytes.fromhex("fa f4 eb fd"))  # cli; hlt; jmp hlt
+            code.extend(bytes.fromhex("ba f4 00 b0 2a ee fa f4 eb fd"))
             sector = code.ljust(510, b"\0") + bytes.fromhex("55 aa")
             disk.write_bytes(sector.ljust(1024 * 1024, b"\0"))
-            with subprocess.Popen(
+            qemu = subprocess.run(
                 [
                     self.emulator, "-L", str(Path(self.bios).parent), "-machine", "q35",
                     "-accel", self.accelerator, "-display", "none", "-monitor", "none",
                     "-serial", f"file:{serial}", "-nic", "none",
+                    "-device", "isa-debug-exit,iobase=0xf4,iosize=0x4",
                     "-drive", f"file={disk},format=raw", "-boot", "c",
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
-            ) as qemu:
-                try:
-                    deadline = time.monotonic() + 30
-                    while time.monotonic() < deadline and qemu.poll() is None:
-                        if serial.exists() and marker in serial.read_bytes():
-                            return
-                        time.sleep(0.05)
-                    if qemu.poll() is not None:
-                        self.fail(qemu.stderr.read().decode(errors="replace"))
-                    self.fail("Guest did not write the serial marker")
-                finally:
-                    if qemu.poll() is None:
-                        qemu.kill()
+                timeout=30,
+                text=True,
+            )
+            self.assertEqual(qemu.returncode, 85, qemu.stderr)
+            self.assertIn(marker, serial.read_bytes())
 
 
 if __name__ == "__main__":

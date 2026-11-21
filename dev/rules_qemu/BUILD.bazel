@@ -44,6 +44,7 @@ system_probe_data(name = "system_probe_data")
 py_test(
     name = "system_probe_test",
     srcs = ["system_probe.py"],
+    main = "system_probe.py",
     args = ["$(rlocationpath :system_probe_data)"],
     data = [":system_probe_data"],
     deps = ["@rules_python//python/runfiles"],
