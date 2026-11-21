@@ -38,7 +38,7 @@ class RegistryTest(unittest.TestCase):
 
     def test_default_workspace_only_adds_the_profile_tag(self):
         dev = ROOT / "dev"
-        for name in ("BUILD.bazel", ".bazelversion"):
+        for name in ("BUILD.bazel", ".bazelversion", "zig-windows-params.patch"):
             self.assertEqual((dev / "default" / name).read_bytes(), (dev / name).read_bytes())
         self.assertEqual((dev / "default/MODULE.bazel").read_text(),
                          (dev / "MODULE.bazel").read_text()
@@ -52,9 +52,24 @@ class RegistryTest(unittest.TestCase):
                 dev = ROOT / "dev" / subdir
                 self.assertEqual((presubmit / "BUILD.bazel").read_bytes(),
                                  (dev / "BUILD.bazel").read_bytes())
+                self.assertEqual((presubmit / "zig-windows-params.patch").read_bytes(),
+                                 (dev / "zig-windows-params.patch").read_bytes())
                 self.assertEqual((presubmit / "MODULE.bazel").read_text(),
                                  (dev / "MODULE.bazel").read_text()
                                  + f'\nlocal_path_override(module_name = "qemu", path = "{override}")\n')
+
+
+    def test_windows_zig_patch_matches_across_workspaces(self):
+        expected = (ROOT / "dev/zig-windows-params.patch").read_bytes()
+        for rel in (
+            "dev/default/zig-windows-params.patch",
+            "dev/rules_qemu/zig-windows-params.patch",
+            "example/zig-windows-params.patch",
+            "modules/qemu/11.1.2/overlay/bazel/presubmit/zig-windows-params.patch",
+            "modules/qemu/11.1.2/overlay/bazel/presubmit/default/zig-windows-params.patch",
+        ):
+            with self.subTest(path=rel):
+                self.assertEqual((ROOT / rel).read_bytes(), expected)
 
 
 if __name__ == "__main__":

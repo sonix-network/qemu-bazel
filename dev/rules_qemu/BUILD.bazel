@@ -1,6 +1,7 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@rules_qemu//qemu:qemu_system_toolchain.bzl", "qemu_system_toolchain")
-load(":system_probe_test.bzl", "system_probe_test")
+load("@rules_python//python:py_test.bzl", "py_test")
+load(":source_toolchain.bzl", "source_toolchain")
+load(":system_probe_test.bzl", "system_probe_data")
 
 _LINUX_X86_64 = ["@platforms//os:linux", "@platforms//cpu:x86_64"]
 _MUSL_EXEC = _LINUX_X86_64 + ["@zig_sdk//libc:musl"]
@@ -19,24 +20,32 @@ copy_to_directory(
     root_paths = ["pc-bios"],
 )
 
-qemu_system_toolchain(
+source_toolchain(
     name = "source_system_impl",
-    accel = "kvm",
-    machine = "q35",
     qemu_img = "@qemu//:qemu-img",
-    qemu_system = "@qemu//:qemu-system-x86_64",
     system_data = ":pc_bios",
-    system_data_anchor = ":pc_bios",
-    system_target = "x86_64-softmmu",
-    target_arch = "x86_64",
 )
 
-toolchain(
-    name = "source_system_x86_64",
-    exec_compatible_with = _MUSL_EXEC,
-    target_compatible_with = _LINUX_X86_64,
-    toolchain = ":source_system_impl",
-    toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
-)
+[
+    toolchain(
+        name = "source_system_" + os + "_x86_64",
+        exec_compatible_with = constraints,
+        toolchain = ":source_system_impl",
+        toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
+    )
+    for os, constraints in [
+        ("linux", _MUSL_EXEC),
+        ("windows", ["@platforms//os:windows", "@platforms//cpu:x86_64"]),
+    ]
+]
 
-system_probe_test(name = "system_probe_test")
+system_probe_data(name = "system_probe_data")
+
+py_test(
+    name = "system_probe_test",
+    srcs = ["system_probe.py"],
+    main = "system_probe.py",
+    args = ["$(rlocationpath :system_probe_data)"],
+    data = [":system_probe_data"],
+    deps = ["//probe:accelerator", "@rules_python//python/runfiles"],
+)

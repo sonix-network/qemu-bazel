@@ -1,0 +1,111 @@
+diff --git a/glib/BUILD.bazel b/glib/BUILD.bazel
+--- a/glib/BUILD.bazel
++++ b/glib/BUILD.bazel
+@@ -12,9 +12,9 @@
+ # Bazel 7's MSVC toolchain also passes /DCOMPILER_MSVC by default, which
+ # collides with the CompilerType enum in gio/glib-compile-resources.c.
+ # Bazel 8 dropped it; glib reads _MSC_VER, never this, so drop it too.
+-MSVC_COPTS = select({
++WINDOWS_COPTS = select({
+     "@platforms//os:windows": [
+-        "/utf-8",
++        "-finput-charset=UTF-8",
+-        "/UCOMPILER_MSVC",
++        "-UCOMPILER_MSVC",
+     ],
+     "//conditions:default": [],
+@@ -345,7 +345,7 @@
+         "-I" + INCLUDE_PREFIX,
+         "-I%s/glib" % (INCLUDE_PREFIX,),
+         "-I%s/glib/deprecated" % (INCLUDE_PREFIX,),
+-    ] + MSVC_COPTS,
++    ] + WINDOWS_COPTS,
+     implementation_deps = [
+         ":glib_internal_textual_hdrs",
+         "//:config_h",
+@@ -371,22 +371,21 @@
+         ],
+         # Upstream's win32_ldflags, which meson also exposes through
+         # glib-2.0.pc, plus winmm for the timeGetTime()/timeBeginPeriod()
+-        # calls in gmain.c.  Spelled for link.exe, since the Windows arm of
+-        # this port targets MSVC.
++        # calls in gmain.c.  Use GNU driver syntax for the Windows Zig toolchain.
+         "@platforms//os:windows": [
+-            "-DEFAULTLIB:ws2_32.lib",
+-            "-DEFAULTLIB:ole32.lib",
+-            "-DEFAULTLIB:winmm.lib",
+-            "-DEFAULTLIB:shlwapi.lib",
+-            "-DEFAULTLIB:uuid.lib",
++            "-lws2_32",
++            "-lole32",
++            "-lwinmm",
++            "-lshlwapi",
++            "-luuid",
+             # A Visual Studio project links these by default and meson
+             # leans on that; Bazel's MSVC toolchain does not, so name them.
+             # advapi32: the registry and SID calls in gutils.c/gtimezone.c.
+             # user32: the message-loop calls in giowin32.c/gmessages.c.
+             # shell32: CommandLineToArgvW in goption.c.
+-            "-DEFAULTLIB:advapi32.lib",
+-            "-DEFAULTLIB:user32.lib",
+-            "-DEFAULTLIB:shell32.lib",
++            "-ladvapi32",
++            "-luser32",
++            "-lshell32",
+         ],
+         "//conditions:default": [],
+     }),
+@@ -420,13 +419,12 @@
+     copts = [
+         "-I" + INCLUDE_PREFIX,
+         "-I%s/glib" % (INCLUDE_PREFIX,),
+-    ] + MSVC_COPTS,
++    ] + WINDOWS_COPTS,
+     linkopts = [] if suffix else [
+         # meson's win_subsystem : 'windows'.  Without HELPER_CONSOLE the
+         # entry point is WinMain, and the console helper is the one that
+         # keeps a console attached.
+-        "-SUBSYSTEM:WINDOWS",
+-        "-ENTRY:WinMainCRTStartup",
++        "-mwindows",
+     ],
+     local_defines = [
+         "G_LOG_DOMAIN='\"GLib\"'",
+diff --git a/glib/gnulib/BUILD.bazel b/glib/gnulib/BUILD.bazel
+--- a/glib/gnulib/BUILD.bazel
++++ b/glib/gnulib/BUILD.bazel
+@@ -63,7 +63,7 @@
+         "-I%s/glib/gnulib" % (INCLUDE_PREFIX,),
+         "-I$(BINDIR)/%s/glib/gnulib" % (INCLUDE_PREFIX,),
+     ] + select({
+-        "@platforms//os:windows": ["/utf-8"],
++        "@platforms//os:windows": ["-finput-charset=UTF-8"],
+         "//conditions:default": [],
+     }),
+     # printf-frexpl.c is the long-double build of printf-frexp.c: it
+diff --git a/glib/gnulib/isnanl-nolibm.h b/glib/gnulib/isnanl-nolibm.h
+--- a/glib/gnulib/isnanl-nolibm.h
++++ b/glib/gnulib/isnanl-nolibm.h
+@@ -20,7 +20,7 @@
+ # if __GNUC__ >= 4
+    /* GCC 4.0 and newer provides three built-ins for isnan.  */
+ #  undef isnanl
+-#  define isnanl(x) __builtin_isnanl ((long double)(x))
++#  define isnanl(x) __builtin_isnan ((long double)(x))
+ # elif defined isnan
+ #  undef isnanl
+ #  define isnanl(x) isnan ((long double)(x))
+diff --git a/config.h-windows b/config.h-windows
+--- a/config.h-windows
++++ b/config.h-windows
+@@ -140,5 +140,10 @@
+  * The UCRT provides all three.
+  */
+ #define HAVE__SET_INVALID_PARAMETER_HANDLER 1
++/* Zig's MinGW headers don't declare the thread-local handler. */
++#ifdef __MINGW32__
++#define HAVE_DIRENT_H 1
++#else
+ #define HAVE__SET_THREAD_LOCAL_INVALID_PARAMETER_HANDLER 1
++#endif
+ #define HAVE__CRT_SET_REPORT_MODE 1

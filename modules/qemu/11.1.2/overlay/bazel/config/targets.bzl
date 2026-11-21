@@ -15,7 +15,7 @@ BUILD files read to pick sources (qemu_target_library et al.) and to
 write <target>-config-target.h / -config-devices.h.
 """
 
-load("//bazel/config:config_host.bzl", "CONFIG_HOST")
+load("//bazel/config:config_host.bzl", "CONFIG_HOST", "CONFIG_HOST_WINDOWS")
 load("//bazel/config:options.bzl", "OPTIONS")
 
 # meson.build: disassemblers
@@ -141,9 +141,9 @@ def _target_config(mctx, target, devmak, settings, python):
         cfg["DEVICES"] = sorted(devs.keys())
 
         # re-run when any Kconfig file minikconf read changes
-        deps = mctx.read(depfile).replace("\\\n", " ").replace("\n", " ")
+        deps = mctx.read(depfile).replace("\r", "").replace("\\\n", " ").replace("\n", " ")
         for tok in deps.partition(":")[2].split(" "):
-            if tok.startswith("/") and not tok.endswith(":"):
+            if (tok.startswith("/") or (len(tok) > 2 and tok[1:3] in (":/", ":\\"))) and not tok.endswith(":"):
                 mctx.watch(tok)
     return cfg
 
@@ -177,9 +177,11 @@ _qemu_targets_repo = repository_rule(
 )
 
 def _qemu_targets_impl(mctx):
-    if mctx.os.name != "linux" or mctx.os.arch not in ("amd64", "x86_64"):
-        fail("QEMU repository configuration requires a Linux x86_64 host")
-    python = mctx.path(Label("@qemu_host_python//:bin/python3"))
+    windows = mctx.os.name.startswith("windows")
+    if (not windows and mctx.os.name != "linux") or mctx.os.arch not in ("amd64", "x86_64"):
+        fail("QEMU repository configuration requires a Linux or Windows x86_64 host")
+    python = mctx.path(Label("@qemu_windows_python//:python.exe") if windows else Label("@qemu_linux_python//:bin/python3"))
+    accelerator = "whpx" if windows else "kvm"
     tags = []
     for mod in mctx.modules:
         if mod.tags.configure and not mod.is_root:
@@ -197,9 +199,9 @@ def _qemu_targets_impl(mctx):
         devmak_path = mctx.path(tag.devices)
     if tag and tag.device_mode:
         default_devices = tag.device_mode == "defconfig"
-    accelerators = tag.accelerators if tag else ["kvm"]
-    if accelerators != ["kvm"]:
-        fail("the Linux x86_64 overlay currently supports exactly accelerators = [\"kvm\"]")
+    accelerators = tag.accelerators if tag and tag.accelerators else [accelerator]
+    if accelerators != [accelerator]:
+        fail("this host requires accelerators = {}".format([accelerator]))
     backends = tag.trace_backends if tag else ["profile-default"]
     if backends == ["profile-default"]:
         backends = ["simple"] if profile == "default" else ["nop"]
@@ -212,7 +214,7 @@ def _qemu_targets_impl(mctx):
     _check_choices("features", features, ["pixman", "slirp"])
     settings = {
         "accelerators": accelerators,
-        "config_host": CONFIG_HOST | {
+        "config_host": (CONFIG_HOST_WINDOWS if windows else CONFIG_HOST) | {
             "CONFIG_PIXMAN": "pixman" in features,
             "CONFIG_SLIRP": "slirp" in features,
             "CONFIG_TRACE_SIMPLE": "simple" in backends,
@@ -221,7 +223,9 @@ def _qemu_targets_impl(mctx):
         "default_devices": default_devices,
         "device_set": str(tag.devices) if tag and tag.devices else devmak,
         "features": sorted(features),
-        "options": OPTIONS | {k: k in features for k in ["pixman", "slirp"]},
+        "options": OPTIONS | {k: k in features for k in ["pixman", "slirp"]} | {
+            "coroutine_backend": "windows" if windows else OPTIONS["coroutine_backend"],
+        },
         "profile": profile,
         "trace_backends": backends,
     }
@@ -231,7 +235,7 @@ def _qemu_targets_impl(mctx):
     settings["configure_args"] = [
         "--target-list=" + target,
         "--without-default-features",
-        "--enable-kvm",
+        "--enable-" + accelerator,
         "--disable-tcg",
         "--disable-tools",
         "--disable-docs",
@@ -264,8 +268,10 @@ def _check_choices(field, values, allowed):
 
 qemu_targets = module_extension(
     implementation = _qemu_targets_impl,
+    os_dependent = True,
+    arch_dependent = True,
     tag_classes = {"configure": tag_class(attrs = {
-        "accelerators": attr.string_list(default = ["kvm"]),
+        "accelerators": attr.string_list(),
         "device_mode": attr.string(values = ["", "defconfig", "allnoconfig"]),
         "devices": attr.label(),
         "features": attr.string_list(default = ["profile-default"]),

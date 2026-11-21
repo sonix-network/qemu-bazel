@@ -1,6 +1,5 @@
-# Placeholder until this directory is built with Bazel.
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//bazel:qemu.bzl", "qemu_package")
+load("//bazel:qemu.bzl", "qemu_package", "qemu_target_source_set", "when")
 
 exports_files(["trace-events"])
 
@@ -9,6 +8,17 @@ cc_library(
     name = "headers",
     hdrs = ["whpx-i386.h"],
     visibility = ["//target/i386:__pkg__"],
+)
+
+qemu_target_source_set(
+    name = "whpx_ss",
+    arch = "i386",
+    textual_hdrs = ["trace.h"],
+    when = [when("CONFIG_WHPX", ["whpx-all.c", "whpx-apic.c", "whpx-cpu-legacy.c"])],
+    deps = [
+        ":headers",
+        "//target/i386/emulate:headers",
+    ],
 )
 
 qemu_package()

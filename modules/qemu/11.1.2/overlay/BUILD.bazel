@@ -13,6 +13,7 @@ load("@qemu_targets//:targets.bzl", "TARGETS")
 load("@qemu_targets//:version.bzl", "QEMU_VERSION")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel:config_h.bzl", "config_devices_values", "config_header", "config_poison", "config_target_values")
 load("//bazel:executable_script.bzl", "executable_script")
@@ -240,8 +241,8 @@ qemu_target_source_set(
 # else defines (see qemu_archive_part).
 qemu_archive(
     name = "libqemuutil",
-    copts = ["-pthread"],  # meson.build: dependency('threads')
-    linkopts = [
+    copts = [] if CONFIG_HOST["CONFIG_WIN32"] else ["-pthread"],
+    linkopts = [] if CONFIG_HOST["CONFIG_WIN32"] else [
         "-lm",
         "-pthread",
     ],
@@ -254,7 +255,7 @@ qemu_archive(
         # Meson's stub_ss spans these subdirectories. Keep these objects in
         # the same archive as util, even when the device itself is disabled.
         "//accel/stubs:stub_ss",
-        "//fsdev:stub_ss",
+    ] + (["//fsdev:stub_ss"] if qemu_enabled("CONFIG_LINUX") else []) + [
         "//hw/acpi:stub_ss",
         "//hw/arm:stub_ss",
         "//hw/cxl:stub_ss",
@@ -422,7 +423,7 @@ qemu_package(subdirs = [
     ],
     target_compatible_with = [
         "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
+        "@platforms//os:windows" if CONFIG_HOST["CONFIG_WIN32"] else "@platforms//os:linux",
     ],
     deps = [
         ":" + target,
@@ -436,6 +437,7 @@ qemu_package(subdirs = [
 qemu_build_info(
     name = "qemu-system-x86_64_info",
     binary = ":qemu-system-x86_64",
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 # Registry overlay files do not carry executable mode bits.
@@ -461,6 +463,19 @@ sh_test(
     target_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
+    ],
+)
+
+py_test(
+    name = "whpx_smoke_test",
+    srcs = ["//bazel:whpx_smoke_test.py"],
+    main = "whpx_smoke_test.py",
+    args = ["$(rlocationpath :qemu-system-x86_64)", _SMOKE_DEVICE_SET],
+    data = [":qemu-system-x86_64"],
+    deps = ["@rules_python//python/runfiles"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
     ],
 )
 

@@ -1,6 +1,5 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//bazel:qemu.bzl", "qemu_archive_part", "qemu_package", "when")
-load("//bazel/config:options.bzl", "OPTIONS")
+load("//bazel:qemu.bzl", "OPTIONS", "qemu_archive_part", "qemu_enabled", "qemu_package", "when")
 
 # Translated from util/meson.build.
 
@@ -252,10 +251,7 @@ qemu_archive_part(
             ["s390x_pci_mmio.c"],
         ),
     ],
-    deps = [
-        ":headers",
-        "//subprojects/libvhost-user:headers",
-    ],
+    deps = [":headers"] + (["//subprojects/libvhost-user:headers"] if qemu_enabled("CONFIG_LINUX") else []),
 )
 
 qemu_package()

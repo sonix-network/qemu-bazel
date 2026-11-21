@@ -27,10 +27,10 @@ cc_library(
         "src/libslirp-version.h",
     ],
     copts = ["-std=gnu99"],
+    defines = ["LIBSLIRP_STATIC"],
     includes = ["src"],
     linkstatic = True,
     local_defines = [
-        "BUILDING_LIBSLIRP",
         'G_LOG_DOMAIN=\\"Slirp\\"',
     ],
     visibility = ["//visibility:public"],

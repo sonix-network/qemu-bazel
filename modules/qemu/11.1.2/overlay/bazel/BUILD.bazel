@@ -6,3 +6,5 @@ exports_files([
     "libslirp.BUILD.bazel",
     "source_provenance.json",
 ])
+
+exports_files(["whpx_smoke_test.py"])

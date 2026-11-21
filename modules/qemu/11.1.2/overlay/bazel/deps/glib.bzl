@@ -34,7 +34,7 @@ def _impl(mctx):
         strip_prefix = "glib-2.84.4",
         remote_file_urls = {path: [_BCR + path] for path in _FILES},
         remote_file_integrity = _FILES,
-        patches = [Label("//bazel/deps:glib_musl.diff")],
+        patches = [Label("//bazel/deps:glib_musl.diff"), Label("//bazel/deps:glib_mingw.diff")],
         patch_args = ["-p1"],
     )
     return mctx.extension_metadata(reproducible = True)
