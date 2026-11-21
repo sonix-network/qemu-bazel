@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 expand_template(
     name = "version_header",
@@ -14,7 +15,7 @@ expand_template(
 )
 
 cc_library(
-    name = "qemu_libslirp",
+    name = "libslirp",
     srcs = glob(
         [
             "src/*.c",
@@ -33,6 +34,14 @@ cc_library(
         "BUILDING_LIBSLIRP",
         'G_LOG_DOMAIN=\\"Slirp\\"',
     ],
+    target_compatible_with = ["@platforms//os:linux"],
     visibility = ["//visibility:public"],
-    deps = ["@qemu_glib//glib"],
+    deps = ["@glib//glib"],
+)
+
+cc_test(
+    name = "version_test",
+    srcs = ["bazel_version_test.c"],
+    deps = [":libslirp"],
+    target_compatible_with = ["@platforms//os:linux"],
 )

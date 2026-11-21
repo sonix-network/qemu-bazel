@@ -15,7 +15,9 @@ Do not use `11.1.2-r0`: Bazel sorts it before `11.1.2`.
 is not supported by the QEMU project.** It builds a static Linux x86-64 system
 emulator with KVM and without TCG; it is not a general replacement for QEMU's
 Meson build. The published module does not select or register a compiler.
-Build generators use pinned Python 3.12.
+Build generators use pinned Python 3.12. Device configuration uses the
+rules_python host interpreter; the emulator and tools still target Linux
+x86-64 only.
 
 ## Build and test
 
@@ -37,7 +39,10 @@ Both workspaces register Zig/musl and use a relative `file://` URL for this
 registry, followed by `https://bcr.bazel.build` for dependencies. Other
 consumers can declare `bazel_dep(name = "qemu", version = "11.1.2")`, add
 `--registry=file:///absolute/path/to/this/checkout` followed by the BCR URL,
-and supply their own Linux x86-64 C toolchain with a static libc.
+and supply their own Linux x86-64 C toolchain with a static libc. This
+checkout also carries the unpublished prerequisite BCR entries for GLib,
+PCRE2 and libslirp so the whole graph can be tested before their submissions
+land. They are normal `bazel_dep` dependencies, not private archive repos.
 
 The smoke test checks version, KVM, device and trace registration. It also
 requires q35 and rejects i440FX in `minimal`; it requires both in `default`.
@@ -131,9 +136,10 @@ emulator as a whole, as described in the release's `LICENSE`, not an inventory
 of every source file. For example, the compiled sources `util/cutils.c` and
 `util/oslib-posix.c` carry their own MIT notices.
 
-The pinned GLib build overlay also uses `package_metadata`, retaining its
-separate `LGPL-2.1-or-later` declaration. This replaces the QEMU module's direct
-`rules_license` dependency; other dependencies may still use `rules_license`.
+The separate GLib BCR revision uses `package_metadata`, retaining its own
+`LGPL-2.1-or-later` declaration with the upstream `COPYING` text. The GLib
+musl configuration and shell-free GLib and PCRE2 generator changes live in
+their respective module entries.
 
 This repository's own files (the Bazel overlay, registry metadata, developer
 tools and example) are licensed under the [Apache License 2.0](LICENSE). QEMU
