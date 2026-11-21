@@ -1,4 +1,9 @@
-# Placeholder until this directory is built with Bazel.
-load("//bazel:qemu.bzl", "qemu_package")
+load("//bazel:qemu.bzl", "qemu_package", "qemu_target_source_set", "when")
+
+qemu_target_source_set(
+    name = "whpx_ss",
+    arch = "i386",
+    when = [when("CONFIG_WHPX", ["whpx-accel-ops.c", "whpx-common.c"])],
+)
 
 qemu_package()

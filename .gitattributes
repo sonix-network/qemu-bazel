@@ -1,0 +1,2 @@
+/modules/qemu/*/overlay/** text eol=lf
+/dev/** text eol=lf

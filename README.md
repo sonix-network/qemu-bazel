@@ -6,8 +6,8 @@ its checked-in, individually pinned overlay. No materialization step is needed.
 
 **This downstream overlay is AI-generated. It is not part of upstream QEMU and
 is not supported by the QEMU project.** It builds a static Linux x86-64 system
-emulator with KVM and without TCG; it is not a general replacement for QEMU's
-Meson build. The published module does not select or register a compiler.
+emulator with KVM and includes a Windows x86-64 overlay for WHPX. Both
+use accelerator-specific builds without TCG. The published module does not select or register a compiler.
 Build generators use pinned Python 3.12.
 
 ## Build and test
@@ -41,6 +41,33 @@ a runtime. Use `--distdir` to point Bazel at a locally downloaded archive if
 needed; the [release and overlay pins](modules/qemu/11.1.2/source.json) still
 apply.
 
+## Windows x86-64
+
+Use Bazel 9.3.2 and its required x64 Visual C++ runtime. The developer
+workspaces register the Windows GNU toolchain from
+`hermetic_cc_toolchain` 4.3.0, which supplies Zig 0.15.2 and MinGW headers
+and import libraries. From `dev/` or `dev/default/` in PowerShell, replace
+the local registry path with the absolute path of your checkout:
+
+```powershell
+bazel --ignore_all_rc_files build --registry=file:///C:/src/qemu-bazel --registry=https://bcr.bazel.build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 @qemu//:qemu-system-x86_64
+bazel --ignore_all_rc_files test --registry=file:///C:/src/qemu-bazel --registry=https://bcr.bazel.build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 @qemu//:whpx_smoke_test
+```
+
+The registration test runs version and help commands without launching a
+guest. A guest run requires the Windows Hypervisor Platform feature
+(`HypervisorPlatform`), a running hypervisor accessible to the emulator,
+and `-accel whpx`. Use `-L` with the directory containing the release
+firmware. The Windows Kubernetes pod tested for issue #2 reports WHPX
+unavailable from inside its process-isolated container.
+
+Rules can request `@qemu//toolchain:type` and access it through
+`ctx.toolchains`. The module registers the Linux/KVM and Windows/WHPX
+implementations by execution OS and CPU. The selected toolchain exposes
+`emulator` (a `FilesToRunProvider`), `accelerator`, `runtime_files` (a
+depset of firmware and emulator runfiles), `version`, and `provenance`.
+The overlay configures native builds on the Bazel host.
+
 ## Configure the module
 
 With no configuration tag, `minimal` seeds Kconfig with `CONFIG_Q35=y`
@@ -59,15 +86,17 @@ The root module can also supply its own `.mak` file as `devices`, choose
 `device_mode = "allnoconfig"` or `"defconfig"`, and select any subset of
 `["pixman", "slirp"]` as `features`. GLib and zlib are required. The
 `trace_backends` choices are `simple`, `log`, and `nop` (`nop` must stand alone).
-Only `accelerators = ["kvm"]` is supported. Configuration applies to the whole
+The accelerator defaults to KVM on Linux and WHPX on Windows. Supply
+`accelerators = ["kvm"]` or `accelerators = ["whpx"]` to require a particular
+accelerator on its supported host. Configuration applies to the whole
 module, not to individual executables.
 
 ## Use with `rules_qemu`
 
-The [toolchain example](dev/rules_qemu/) registers the source-built emulator,
-`qemu-img`, and staged `pc-bios` data with `rules_qemu` 0.3.0. It tests toolchain
-resolution without `/dev/kvm`. The QEMU module itself does not register
-`rules_qemu` toolchains or depend on that module.
+The [toolchain example](dev/rules_qemu/) adapts the source-built emulator,
+`qemu-img`, and staged `pc-bios` data to `rules_qemu` 0.3.0. A single test
+checks toolchain resolution and boots a bare-metal guest using the selected
+accelerator. The boot test reports a skip when KVM or WHPX is unavailable.
 
 ## Build provenance
 
