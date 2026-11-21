@@ -131,7 +131,7 @@ From a Linux or Windows x86-64 host with Bazel 9.3.2 or Bazelisk, run the same t
 ```sh
 cd example
 bazel build //:x86_64_uart_test
-bazel test --test_strategy=local --test_output=all //:x86_64_uart_test
+bazel test --test_strategy=standalone --test_output=all //:x86_64_uart_test
 ```
 
 [`example/`](example/) pins Rust 1.91.1 with `rules_rust`. A platform transition
@@ -156,7 +156,7 @@ installation, disk image, or network.
 
 The test is tagged `manual` and the example workflow invokes it explicitly.
 It prints `SKIP` if it cannot open `/dev/kvm` on Linux or create a WHPX
-partition on Windows. On Linux, the local test strategy exposes `/dev/kvm`
+partition on Windows. On Linux, the standalone test strategy exposes `/dev/kvm`
 to the test. Build actions still use the restricted action environment.
 
 ## Build provenance

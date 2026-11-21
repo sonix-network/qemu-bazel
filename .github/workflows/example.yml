@@ -23,4 +23,4 @@ jobs:
           persist-credentials: false
       - name: Build and test the UART guest on the native accelerator
         working-directory: example
-        run: bazelisk test --test_strategy=local --test_output=all //:x86_64_uart_test
+        run: bazelisk test --test_strategy=standalone --test_output=all //:x86_64_uart_test
