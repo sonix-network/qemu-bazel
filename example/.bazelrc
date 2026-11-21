@@ -9,4 +9,4 @@ build:linux --extra_execution_platforms=//:linux_x86_64_musl
 
 # Rust's musl toolchain provides its own CRT objects. Link directly with
 # rust-lld; a C compiler driver can add a second set of CRT objects.
-build --@rules_rust//rust/settings:toolchain_linker_preference=rust
+build:linux --@rules_rust//rust/settings:toolchain_linker_preference=rust
