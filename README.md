@@ -128,6 +128,10 @@ The pinned GLib build overlay also uses `package_metadata`, retaining its
 separate `LGPL-2.1-or-later` declaration. This replaces the QEMU module's direct
 `rules_license` dependency; other dependencies may still use `rules_license`.
 
+This repository's own files (the Bazel overlay, registry metadata, developer
+tools and example) are licensed under the [Apache License 2.0](LICENSE). QEMU
+itself, which the overlay builds, keeps its upstream licenses described above.
+
 ## Validation and developer tools
 
 Both developer workspaces built with Bazel 9.3.2 and Zig/musl, and both passed
