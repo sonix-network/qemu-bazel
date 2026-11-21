@@ -1,7 +1,7 @@
 module(name = "qemu_rules_qemu_example")
 
 bazel_dep(name = "qemu", version = "11.1.2")
-bazel_dep(name = "rules_qemu", version = "0.3.0", dev_dependency = True)
+bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "bazel_lib", version = "3.2.2", dev_dependency = True)
 bazel_dep(name = "rules_python", version = "2.5.1", dev_dependency = True)
 bazel_dep(name = "platforms", version = "1.1.0", dev_dependency = True)

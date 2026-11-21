@@ -56,23 +56,29 @@ bazel build @qemu//:qemu-system-x86_64
 bazel test @qemu//:whpx_smoke_test
 ```
 
-If `launcher_maker.exe` fails with exit code `-1073741515`, add the
-directory containing the x64 Visual C++ runtime DLLs to your PowerShell
-session's `PATH`. Bazel's embedded JDK includes these DLLs. For a session
-without a machine-wide runtime installation, run:
+On a slim Windows image, `launcher_maker.exe` can exit with `-1073741515`
+when the x64 Visual C++ runtime is absent. Stage the DLLs from Bazel's
+embedded JDK beside the maker in the Bazel install cache. Expose the same
+DLL directory to the test processes with `--test_env`. The developer
+workspaces use an empty build-action `PATH` for both profiles.
 
 ```powershell
 $installBase = bazel info install_base
-$env:Path = "$installBase\embedded_tools\jdk\bin;$env:Path"
-bazel test @qemu//:whpx_smoke_test
+$runtime = Join-Path $installBase 'embedded_tools/jdk/bin'
+$launcher = Join-Path $installBase 'embedded_tools/tools/launcher'
+foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
+    Copy-Item -LiteralPath (Join-Path $runtime $dll) -Destination $launcher
+}
+bazel test "--test_env=PATH=$runtime" @qemu//:whpx_smoke_test
 ```
 
 The registration test runs version and help commands without launching a
 guest. A guest run requires the Windows Hypervisor Platform feature
 (`HypervisorPlatform`), a running hypervisor accessible to the emulator,
 and `-accel whpx`. Use `-L` with the directory containing the release
-firmware. The Windows Kubernetes pod tested for issue #2 reports WHPX
-unavailable from inside its process-isolated container.
+firmware. Availability depends on the Windows environment. Issue #2 records
+the capability and partition checks on both a process-isolated container and
+a HostProcess session.
 
 Rules can request `@qemu//toolchain:type` and access it through
 `ctx.toolchains`. The module registers the Linux/KVM and Windows/WHPX
@@ -120,19 +126,20 @@ accelerator. The boot test reports a skip when KVM or WHPX is unavailable.
 
 ### Run a bare-metal x86-64 Rust binary
 
-From a Linux x86-64 host with Bazel 9.3.2 or Bazelisk:
+From a Linux or Windows x86-64 host with Bazel 9.3.2 or Bazelisk, run the same target:
 
 ```sh
 cd example
-bazel build //:x86_64_uart_test  # Build-only check; no /dev/kvm needed.
-bazel test --test_strategy=local //:x86_64_uart_test  # Requires /dev/kvm.
+bazel build //:x86_64_uart_test
+bazel test --test_strategy=local --test_output=all //:x86_64_uart_test
 ```
 
 [`example/`](example/) pins Rust 1.91.1 with `rules_rust`. A platform transition
 builds the `no_std` guest for `x86_64-unknown-none` with the pinned `rust-lld`.
-The test runner and source-built QEMU are native Linux x86-64 executables;
-QEMU uses pinned Zig/musl. The runner resolves the emulator and its data
-through a `rules_qemu` system toolchain; it does not use an installed QEMU.
+The test runner and QEMU are native x86-64 executables. The `rules_qemu`
+adapter resolves the source-built emulator, firmware and accelerator for the
+execution platform. Linux uses pinned Zig/musl with KVM. Windows uses pinned
+Zig/MinGW with WHPX.
 
 Both profiles have q35 and `isa-serial` (COM1). The example uses `default`
 because `minimal` omits `isa-debug-exit`. QEMU loads the guest ELF via `-kernel`.
@@ -147,11 +154,10 @@ PVH direct boot still uses firmware. The example stages `bios-256k.bin`
 although the PVH guest does not need it. The example uses no host firmware
 installation, disk image, or network.
 
-The runtime test is tagged `manual` and `requires-kvm`: wildcard test runs
-and the build-only example presubmit do not boot it. Run it explicitly on
-an x86-64 host where the current user can open `/dev/kvm`. The local test
-strategy exposes the device to the test; the build actions remain sandboxed.
-There is no TCG fallback.
+The test is tagged `manual` and the example workflow invokes it explicitly.
+It prints `SKIP` if it cannot open `/dev/kvm` on Linux or create a WHPX
+partition on Windows. On Linux, the local test strategy exposes `/dev/kvm`
+to the test. Build actions still use the restricted action environment.
 
 ## Build provenance
 

@@ -1,14 +1,15 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@rules_qemu//qemu:qemu_system_toolchain.bzl", "qemu_system_toolchain")
+load("@qemu_rules_qemu_example//:source_toolchain.bzl", "source_toolchain")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 load(":qemu_runfiles.bzl", "qemu_runfiles")
 
-_HOST = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
+_LINUX = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
+_WINDOWS = ["@platforms//cpu:x86_64", "@platforms//os:windows"]
 _GUEST = ["@platforms//cpu:x86_64", "@platforms//os:none"]
 
 platform(
     name = "linux_x86_64_musl",
-    constraint_values = _HOST,
+    constraint_values = _LINUX,
 )
 
 platform(
@@ -40,25 +41,22 @@ copy_to_directory(
     root_paths = ["pc-bios"],
 )
 
-qemu_system_toolchain(
+source_toolchain(
     name = "qemu_x86_64_impl",
-    accel = "kvm",
-    machine = "q35",
     qemu_img = "@qemu//:qemu-img",
-    qemu_system = "@qemu//:qemu-system-x86_64",
     system_data = ":pvh_bios",
-    system_data_anchor = ":pvh_bios",
-    system_target = "x86_64-softmmu",
-    target_arch = "x86_64",
 )
 
-toolchain(
-    name = "qemu_x86_64_toolchain",
-    exec_compatible_with = _HOST,
-    target_compatible_with = _HOST,
-    toolchain = ":qemu_x86_64_impl",
-    toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
-)
+[
+    toolchain(
+        name = "qemu_" + os + "_x86_64",
+        exec_compatible_with = constraints,
+        target_compatible_with = constraints,
+        toolchain = ":qemu_x86_64_impl",
+        toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
+    )
+    for os, constraints in [("linux", _LINUX), ("windows", _WINDOWS)]
+]
 
 qemu_runfiles(
     name = "boot_inputs",
@@ -69,9 +67,10 @@ rust_test(
     name = "x86_64_uart_test",
     size = "small",
     srcs = ["x86_64_uart_test.rs"],
+    args = ["--nocapture"],
     data = [":boot_inputs"],
     edition = "2021",
     rustc_env = {"BOOT_INPUTS": "$(rlocationpath :boot_inputs)"},
-    tags = ["manual", "requires-kvm"],
+    tags = ["manual"],
     deps = ["@rules_rust//rust/runfiles"],
 )

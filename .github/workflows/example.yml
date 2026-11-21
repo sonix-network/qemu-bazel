@@ -1,22 +1,26 @@
-name: Bare-metal example build
+name: Bare-metal example
 
 on:
   push:
     branches: [main]
-    paths: ['example/**', 'dev/build.bazelrc', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
+    paths: ['example/**', 'dev/build.bazelrc', 'dev/rules_qemu/**', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
   pull_request:
-    paths: ['example/**', 'dev/build.bazelrc', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
+    paths: ['example/**', 'dev/build.bazelrc', 'dev/rules_qemu/**', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  uart:
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.host }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Build the guest and QEMU runfiles without KVM
+      - name: Build and test the UART guest on the native accelerator
         working-directory: example
-        run: bazelisk build //:x86_64_uart_test
+        run: bazelisk test --test_strategy=local --test_output=all //:x86_64_uart_test
