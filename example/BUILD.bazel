@@ -1,0 +1,77 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_qemu//qemu:qemu_system_toolchain.bzl", "qemu_system_toolchain")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load(":qemu_runfiles.bzl", "qemu_runfiles")
+
+_HOST = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
+_GUEST = ["@platforms//cpu:x86_64", "@platforms//os:none"]
+
+platform(
+    name = "linux_x86_64_musl",
+    constraint_values = _HOST,
+)
+
+platform(
+    name = "x86_64_baremetal",
+    constraint_values = _GUEST,
+)
+
+rust_binary(
+    name = "hello_x86_64",
+    srcs = ["hello_x86_64.rs"],
+    compile_data = ["pvh.ld"],
+    edition = "2021",
+    rustc_flags = [
+        "-Cpanic=abort",
+        "-Crelocation-model=static",
+        "-Clink-arg=-T$(execpath :pvh.ld)",
+    ],
+    tags = ["manual"],  # Build via :boot_inputs, which applies the guest transition.
+    target_compatible_with = _GUEST,
+)
+
+# QEMU still enters SeaBIOS, whose PVH option ROM reads the ELF entry from
+# fw_cfg. The in-kernel APIC can also register the VAPIC option ROM.
+copy_to_directory(
+    name = "pvh_bios",
+    srcs = ["@qemu//:pc-bios-files"],
+    include_external_repositories = [package_relative_label("@qemu//:pc-bios-files").workspace_name],
+    include_srcs_patterns = ["bios-256k.bin", "pvh.bin", "kvmvapic.bin"],
+    root_paths = ["pc-bios"],
+)
+
+qemu_system_toolchain(
+    name = "qemu_x86_64_impl",
+    accel = "kvm",
+    machine = "q35",
+    qemu_img = "@qemu//:qemu-img",
+    qemu_system = "@qemu//:qemu-system-x86_64",
+    system_data = ":pvh_bios",
+    system_data_anchor = ":pvh_bios",
+    system_target = "x86_64-softmmu",
+    target_arch = "x86_64",
+)
+
+toolchain(
+    name = "qemu_x86_64_toolchain",
+    exec_compatible_with = _HOST,
+    target_compatible_with = _HOST,
+    toolchain = ":qemu_x86_64_impl",
+    toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
+)
+
+qemu_runfiles(
+    name = "boot_inputs",
+    guest = ":hello_x86_64",
+)
+
+rust_test(
+    name = "x86_64_uart_test",
+    size = "small",
+    srcs = ["x86_64_uart_test.rs"],
+    data = [":boot_inputs"],
+    edition = "2021",
+    rustc_env = {"BOOT_INPUTS": "$(rlocationpath :boot_inputs)"},
+    tags = ["manual", "requires-kvm"],
+    deps = ["@rules_rust//rust/runfiles"],
+)

@@ -1,0 +1,8 @@
+common --registry=file://%workspace%/..
+common --registry=https://bcr.bazel.build
+
+import %workspace%/../dev/build.bazelrc
+
+# Rust's musl toolchain provides its own CRT objects. Link directly with
+# rust-lld; a C compiler driver can add a second set of CRT objects.
+build --@rules_rust//rust/settings:toolchain_linker_preference=rust
