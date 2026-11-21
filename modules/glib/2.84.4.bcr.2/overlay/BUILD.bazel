@@ -58,6 +58,6 @@ cc_library(
 config_setting(
     name = "windows_clang",
     constraint_values = ["@platforms//os:windows"],
-    values = {"compiler": "clang"},
+    flag_values = {"@rules_cc//cc/compiler:compiler": "clang"},
     visibility = ["//:__subpackages__"],
 )

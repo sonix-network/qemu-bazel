@@ -3,7 +3,7 @@
     "integrity": "sha256-ip6hCUPDb8EX4lP4DJHkd7ZzUlrkV2KUKFiu9XYxu5A=",
     "strip_prefix": "glib-2.84.4",
     "overlay": {
-        "BUILD.bazel": "sha256-f0LWhqCwQU0K34LATL+0Cua03bvtBW4D/Y5feXO2quA=",
+        "BUILD.bazel": "sha256-we0ii0CEQ8+IPn6+FDPBkjMp827kkIQltEEt7X3IU3o=",
         "config.h-linux": "sha256-sDHokRAwCA9dzuRMGwYqhkKepd5K5cafYcRLX29xmRQ=",
         "config.h-macos": "sha256-bt6MvmC7GqzwidoQUtb1zxO3E/9Q+YSBloSO9AQUObM=",
         "config.h-windows": "sha256-Oc7yTW9MrrHdlvTihhy9TCjA+UnOHsBzNGgbx+XCL1I=",
