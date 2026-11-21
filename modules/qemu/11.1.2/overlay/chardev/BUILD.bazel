@@ -1,5 +1,5 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//bazel:qemu.bzl", "qemu_package", "qemu_source_set", "when")
+load("//bazel:qemu.bzl", "qemu_enabled", "qemu_package", "qemu_source_set", "when")
 
 # Translated from chardev/meson.build.
 
@@ -28,7 +28,7 @@ qemu_source_set(
         "char-stdio.c",
         "char-udp.c",
     ],
-    linkopts = ["-lutil"],
+    linkopts = ["-lutil"] if qemu_enabled("CONFIG_POSIX") else [],
     visibility = ["//visibility:public"],
     when = [
         when(

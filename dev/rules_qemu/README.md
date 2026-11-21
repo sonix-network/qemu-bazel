@@ -6,10 +6,17 @@ Windows/WHPX according to the execution platform. It checks the emulator and
 `qemu-img`, then boots a small real-mode guest and checks its serial output.
 The boot case reports a skip when the accelerator is unavailable.
 
-On Linux x86-64, run `bazel test --test_output=all //:system_probe_test`
-from this directory. On Windows x86-64, supply the absolute registry URL as
-in the root README:
+From this directory on Linux or Windows x86-64, run:
 
-```powershell
-bazel --ignore_all_rc_files test --registry=file:///C:/src/qemu-bazel --registry=https://bcr.bazel.build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 --test_output=all //:system_probe_test
+```sh
+bazel test --test_output=all //:system_probe_test
 ```
+
+The adapter registers the source-built toolchain under
+`@rules_qemu//qemu:exec_toolchain_type`. It uses a registered Linux musl
+execution platform on Linux, and the Bazel host platform on Windows.
+The firmware is staged from the pinned release as a directory File for
+`system_data_anchor`, which consumers pass to QEMU with `-L`. For rules
+that use `target_toolchain_type`, register an adapter under that type too.
+The source-built toolchain covers x86-64 system emulation. The rules_qemu
+prebuilts can still supply user-mode and other guest architectures.

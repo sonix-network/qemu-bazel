@@ -255,6 +255,7 @@ qemu_archive(
         # Meson's stub_ss spans these subdirectories. Keep these objects in
         # the same archive as util, even when the device itself is disabled.
         "//accel/stubs:stub_ss",
+    ] + (["//fsdev:stub_ss"] if qemu_enabled("CONFIG_LINUX") else []) + [
         "//hw/acpi:stub_ss",
         "//hw/arm:stub_ss",
         "//hw/cxl:stub_ss",
@@ -275,7 +276,7 @@ qemu_archive(
         "//net:stub_ss",
         "//semihosting:stub_ss",
         "//stubs:stub_ss",
-    ] + (["//fsdev:stub_ss"] if qemu_enabled("CONFIG_LINUX") else []),
+    ],
     deps = ["@qemu_glib//glib"],
 )
 

@@ -18,7 +18,7 @@ def accelerator_available(accelerator):
         import fcntl
 
         try:
-            with open("/dev/kvm", "rb+") as kvm:
+            with open("/dev/kvm", "rb+", buffering=0) as kvm:
                 return fcntl.ioctl(kvm, 0xAE00, 0) == 12
         except OSError:
             return False
@@ -71,11 +71,15 @@ class SystemProbe(unittest.TestCase):
             serial = directory / "serial.log"
             # In real mode, write a marker to the first serial port and halt.
             marker = b"QEMU boot OK"
-            code = bytearray(bytes.fromhex("ba f8 03"))  # mov dx, 0x3f8
+            code = bytearray(bytes.fromhex(
+                "ba fb 03 b0 03 ee "  # COM1 line control: 8 data bits, DLAB off
+                "ba f8 03"           # COM1 transmit register
+            ))
             for byte in marker:
                 code.extend((0xB0, byte, 0xEE))  # mov al, byte; out dx, al
             code.extend(bytes.fromhex("fa f4 eb fd"))  # cli; hlt; jmp hlt
-            disk.write_bytes(code.ljust(510, b"\0") + bytes.fromhex("55 aa"))
+            sector = code.ljust(510, b"\0") + bytes.fromhex("55 aa")
+            disk.write_bytes(sector.ljust(1024 * 1024, b"\0"))
             with subprocess.Popen(
                 [
                     self.emulator, "-L", str(Path(self.bios).parent), "-machine", "q35",

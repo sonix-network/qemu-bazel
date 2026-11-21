@@ -141,9 +141,9 @@ def _target_config(mctx, target, devmak, settings, python):
         cfg["DEVICES"] = sorted(devs.keys())
 
         # re-run when any Kconfig file minikconf read changes
-        deps = mctx.read(depfile).replace("\\\n", " ").replace("\n", " ")
+        deps = mctx.read(depfile).replace("\r", "").replace("\\\n", " ").replace("\n", " ")
         for tok in deps.partition(":")[2].split(" "):
-            if tok.startswith("/") and not tok.endswith(":"):
+            if (tok.startswith("/") or (len(tok) > 2 and tok[1:3] in (":/", ":\\"))) and not tok.endswith(":"):
                 mctx.watch(tok)
     return cfg
 
@@ -268,6 +268,8 @@ def _check_choices(field, values, allowed):
 
 qemu_targets = module_extension(
     implementation = _qemu_targets_impl,
+    os_dependent = True,
+    arch_dependent = True,
     tag_classes = {"configure": tag_class(attrs = {
         "accelerators": attr.string_list(),
         "device_mode": attr.string(values = ["", "defconfig", "allnoconfig"]),

@@ -26,12 +26,18 @@ source_toolchain(
     system_data = ":pc_bios",
 )
 
-toolchain(
-    name = "source_system_x86_64",
-    exec_compatible_with = ["@platforms//cpu:x86_64"],
-    toolchain = ":source_system_impl",
-    toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
-)
+[
+    toolchain(
+        name = "source_system_" + os + "_x86_64",
+        exec_compatible_with = constraints,
+        toolchain = ":source_system_impl",
+        toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
+    )
+    for os, constraints in [
+        ("linux", _MUSL_EXEC),
+        ("windows", ["@platforms//os:windows", "@platforms//cpu:x86_64"]),
+    ]
+]
 
 system_probe_data(name = "system_probe_data")
 

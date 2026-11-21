@@ -54,6 +54,7 @@ QEMU_COPTS = [
     "-fno-common",
     "-fwrapv",
     "-ftrivial-auto-var-init=zero",
+] + ([] if CONFIG_HOST["CONFIG_WIN32"] else ["-fzero-call-used-regs=used-gpr"]) + [
     "-Wall",
     "-Wempty-body",
     "-Wendif-labels",
@@ -76,7 +77,7 @@ QEMU_COPTS = [
     "-Wno-missing-include-dirs",
     "-Wno-psabi",
     "-Wno-shift-negative-value",
-] + ([] if CONFIG_HOST["CONFIG_WIN32"] else ["-fzero-call-used-regs=used-gpr"])
+]
 
 # Link flags meson.build gives executables (b_asneeded, b_lundef and the
 # relro/now hardening). Keep executable options in the module itself.
@@ -85,10 +86,10 @@ QEMU_LINKOPTS = [
     "-lbcrypt",
     "-liphlpapi",
     "-lole32",
-    "-lpathcch",
+    "-lapi-ms-win-core-path-l1-1-0",
     "-lpsapi",
     "-lsetupapi",
-    "-lsynchronization",
+    "-lapi-ms-win-core-synch-l1-2-0",
     "-lwinmm",
     "-lws2_32",
 ] if CONFIG_HOST["CONFIG_WIN32"] else [

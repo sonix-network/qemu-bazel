@@ -46,12 +46,14 @@ apply.
 Use Bazel 9.3.2 and its required x64 Visual C++ runtime. The developer
 workspaces register the Windows GNU toolchain from
 `hermetic_cc_toolchain` 4.3.0, which supplies Zig 0.15.2 and MinGW headers
-and import libraries. From `dev/` or `dev/default/` in PowerShell, replace
-the local registry path with the absolute path of your checkout:
+and import libraries. The workspaces also apply a pinned patch to enable
+archive and link response files for the Windows toolchain. A consumer
+using the same toolchain can copy the override and patch from [`dev/`](dev/).
+From `dev/` or `dev/default/` in PowerShell, run:
 
 ```powershell
-bazel --ignore_all_rc_files build --registry=file:///C:/src/qemu-bazel --registry=https://bcr.bazel.build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 @qemu//:qemu-system-x86_64
-bazel --ignore_all_rc_files test --registry=file:///C:/src/qemu-bazel --registry=https://bcr.bazel.build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 @qemu//:whpx_smoke_test
+bazel build @qemu//:qemu-system-x86_64
+bazel test @qemu//:whpx_smoke_test
 ```
 
 The registration test runs version and help commands without launching a
@@ -66,7 +68,8 @@ Rules can request `@qemu//toolchain:type` and access it through
 implementations by execution OS and CPU. The selected toolchain exposes
 `emulator` (a `FilesToRunProvider`), `accelerator`, `runtime_files` (a
 depset of firmware and emulator runfiles), `version`, and `provenance`.
-The overlay configures native builds on the Bazel host.
+The overlay configures native builds on the Bazel host. The ELF build
+manifest target applies to the Linux binary.
 
 ## Configure the module
 
@@ -88,8 +91,13 @@ The root module can also supply its own `.mak` file as `devices`, choose
 `trace_backends` choices are `simple`, `log`, and `nop` (`nop` must stand alone).
 The accelerator defaults to KVM on Linux and WHPX on Windows. Supply
 `accelerators = ["kvm"]` or `accelerators = ["whpx"]` to require a particular
-accelerator on its supported host. Configuration applies to the whole
-module, not to individual executables.
+accelerator on its supported host. Configuration applies to the whole module.
+
+The `minimal` profile resolves the same devices on Linux and Windows. In
+`default`, Windows retains q35, i440FX, Pixman, SLIRP, and simple tracing.
+It omits the Linux- or KVM-dependent device options for guest Hyper-V
+(VMBus and test devices), Xen emulation, VFIO/IOMMUFD, ivshmem, host input,
+virtio-mem, VT-d acceleration, SEV, SGX, TDX, and the OVMF device option.
 
 ## Use with `rules_qemu`
 

@@ -13,6 +13,7 @@ cc_library(
 qemu_target_source_set(
     name = "whpx_ss",
     arch = "i386",
+    textual_hdrs = ["trace.h"],
     when = [when("CONFIG_WHPX", ["whpx-all.c", "whpx-apic.c", "whpx-cpu-legacy.c"])],
     deps = [
         ":headers",

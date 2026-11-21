@@ -37,8 +37,10 @@ bcr_test_module:
       platform: windows
       bazel: 9.x
       build_flags:
+        - --jobs=4
         - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
       test_flags:
+        - --jobs=4
         - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
       build_targets:
         - "@qemu//:qemu-system-x86_64"

@@ -98,12 +98,14 @@ diff --git a/glib/gnulib/isnanl-nolibm.h b/glib/gnulib/isnanl-nolibm.h
 diff --git a/config.h-windows b/config.h-windows
 --- a/config.h-windows
 +++ b/config.h-windows
-@@ -140,5 +140,8 @@
+@@ -140,5 +140,10 @@
   * The UCRT provides all three.
   */
  #define HAVE__SET_INVALID_PARAMETER_HANDLER 1
 +/* Zig's Windows GNU target uses MSVCRT, which lacks this UCRT API. */
-+#ifndef __MINGW32__
++#ifdef __MINGW32__
++#define HAVE_DIRENT_H 1
++#else
  #define HAVE__SET_THREAD_LOCAL_INVALID_PARAMETER_HANDLER 1
 +#endif
  #define HAVE__CRT_SET_REPORT_MODE 1
