@@ -22,7 +22,7 @@ class UartTest(unittest.TestCase):
         if not accelerator_available(accelerator):
             self.skipTest(f"{accelerator.upper()} is unavailable on this host")
 
-        serial = Path(os.environ["TEST_TMPDIR"]) / "com1.log"
+        serial = Path(os.environ["TEST_TMPDIR"]) / "uart.log"
         environment = {"LC_ALL": "C"}
         if os.name == "nt":
             # The Windows crypto provider needs SystemRoot during QEMU startup.
@@ -42,7 +42,7 @@ class UartTest(unittest.TestCase):
         )
         self.assertEqual(qemu.returncode, 85, (qemu.stdout, qemu.stderr))
         self.assertEqual(serial.read_bytes(), b"hello from x86_64\n")
-        print(f"{accelerator} COM1: hello from x86_64; QEMU exit status: 85")
+        print(f"{accelerator} COM1: hello from x86_64\nQEMU exit status: 85")
 
 
 if __name__ == "__main__":
