@@ -34,7 +34,7 @@
         "bazel/hxtool.py": "sha256-6f26M+lSudsfWltcY5cNDTj3XMUwxx7Ldqsr+1OYSD4=",
         "bazel/info.bzl": "sha256-dsIrY+v/HbvLoSOfyCo4fP184n2VhpenyZEb2U9pwj8=",
         "bazel/kvm_smoke.sh": "sha256-Pmeys0WSHz36Jd7XQFIHFmbAYBXqbMgNrlKI80JInnI=",
-        "bazel/libslirp.BUILD.bazel": "sha256-l1XZPgfdWtwY1DjTPITkhmbLZ5uyWy0uLfWIorUTaFs=",
+        "bazel/libslirp.BUILD.bazel": "sha256-worW0dl/NCcPQL115EK4v7ex7EpMD5yckeJMUba8fpY=",
         "bazel/presubmit/BUILD.bazel": "sha256-myY+/gaVgLT6l8ca+McEQ3g+X9h5Ft+8nPCeSbtPOzs=",
         "bazel/presubmit/MODULE.bazel": "sha256-yL5y9xxxw6ibw2NOFdwTP/Ktm6m9zD+Qn9S+yqQYXdk=",
         "bazel/presubmit/default/.bazelrc": "sha256-KobHiJ2020yO7ZidaAGf6MVNhJEs1GwsTS0UWwJBb24=",
