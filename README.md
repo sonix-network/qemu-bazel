@@ -4,6 +4,13 @@ This is a standalone Bazel index registry in the Bazel Central Registry (BCR)
 layout. Bazel verifies and extracts the upstream QEMU 11.1.2 release and applies
 its checked-in, individually pinned overlay. No materialization step is needed.
 
+The first registry version for this release is `11.1.2`, in
+`modules/qemu/11.1.2/`. Published versions are immutable. For build-only fixes
+against the same upstream tarball, add a new registry version and directory
+using `11.1.2.bcr.1`, `11.1.2.bcr.2`, and so on. Keep the directory name,
+`module(version = ...)`, and the version listed in `metadata.json` in sync.
+Do not use `11.1.2-r0`: Bazel sorts it before `11.1.2`.
+
 **This downstream overlay is AI-generated. It is not part of upstream QEMU and
 is not supported by the QEMU project.** It builds a static Linux x86-64 system
 emulator with KVM and without TCG; it is not a general replacement for QEMU's
