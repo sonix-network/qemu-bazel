@@ -36,12 +36,25 @@ class RegistryTest(unittest.TestCase):
                   for p in files}
         self.assertEqual(actual, source["overlay"])
 
-    def test_presubmit_workspace_uses_the_same_toolchains(self):
-        presubmit = RELEASE / "overlay/bazel/presubmit"
+    def test_default_workspace_only_adds_the_profile_tag(self):
         dev = ROOT / "dev"
-        self.assertEqual((presubmit / "BUILD.bazel").read_bytes(), (dev / "BUILD.bazel").read_bytes())
-        self.assertEqual((presubmit / "MODULE.bazel").read_bytes(), (dev / "MODULE.bazel").read_bytes()
-                         + b'\nlocal_path_override(module_name = "qemu", path = "../..")\n')
+        for name in ("BUILD.bazel", ".bazelversion"):
+            self.assertEqual((dev / "default" / name).read_bytes(), (dev / name).read_bytes())
+        self.assertEqual((dev / "default/MODULE.bazel").read_text(),
+                         (dev / "MODULE.bazel").read_text()
+                         + '\nqemu = use_extension("@qemu//bazel/config:targets.bzl", "qemu_targets")\n'
+                         'qemu.configure(profile = "default")\n')
+
+    def test_presubmit_workspaces_use_the_same_toolchains_and_profiles(self):
+        for subdir, override in [(".", "../.."), ("default", "../../..")]:
+            with self.subTest(workspace=subdir):
+                presubmit = RELEASE / "overlay/bazel/presubmit" / subdir
+                dev = ROOT / "dev" / subdir
+                self.assertEqual((presubmit / "BUILD.bazel").read_bytes(),
+                                 (dev / "BUILD.bazel").read_bytes())
+                self.assertEqual((presubmit / "MODULE.bazel").read_text(),
+                                 (dev / "MODULE.bazel").read_text()
+                                 + f'\nlocal_path_override(module_name = "qemu", path = "{override}")\n')
 
 
 if __name__ == "__main__":

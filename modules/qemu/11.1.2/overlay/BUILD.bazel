@@ -5,6 +5,7 @@
 # sources that live in the top directory, the libraries the executables
 # link (Meson's declare_dependency() objects) and the executables.
 
+load("@qemu_targets//:settings.bzl", "SETTINGS")
 load("@qemu_targets//:targets.bzl", "TARGETS")
 load("@qemu_targets//:version.bzl", "QEMU_VERSION")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
@@ -417,10 +418,18 @@ executable_script(
     out = "kvm_smoke_test.sh",
 )
 
+# The built-in device sets have fixed expectations; custom sets need not
+# register either PC chipset.
+_SMOKE_DEVICE_SET = (
+    "q35-only" if SETTINGS["device_set"] == "q35" and not SETTINGS["default_devices"] else
+    "qemu-default" if SETTINGS["device_set"] == "default" and SETTINGS["default_devices"] else
+    "custom"
+)
+
 sh_test(
     name = "kvm_smoke_test",
     srcs = [":kvm_smoke_script"],
-    args = ["$(rootpath :qemu-system-x86_64)"],
+    args = ["$(rootpath :qemu-system-x86_64)", _SMOKE_DEVICE_SET],
     data = [":qemu-system-x86_64"],
     target_compatible_with = [
         "@platforms//cpu:x86_64",

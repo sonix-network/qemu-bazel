@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 /dev/bazel-*
 /dev/MODULE.bazel.lock
+/dev/default/bazel-*
+/dev/default/MODULE.bazel.lock

@@ -27,7 +27,7 @@ PINS = {
 }
 CONFIG = {
     "configure_args": ["--enable-kvm", "--disable-modules"],
-    "profile": "consumer",
+    "profile": "default",
     "config_host": {"CONFIG_MODULES": False},
 }
 

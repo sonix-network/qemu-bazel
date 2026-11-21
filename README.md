@@ -12,22 +12,29 @@ Build generators use pinned Python 3.12.
 
 ## Build and test
 
-On Linux x86-64 with Bazel 9.3.2 (or Bazelisk):
+On Linux x86-64 with Bazel 9.3.2 (or Bazelisk), run these commands from the
+repository root. `dev/` exercises the no-tag `minimal` profile; `dev/default/`
+exercises the explicitly selected `default` profile.
 
 ```sh
-cd dev
-bazel build @qemu//:qemu-system-x86_64 @qemu//:qemu-system-x86_64_info
-bazel test @qemu//:kvm_smoke_test
+for workspace in dev dev/default; do
+  (
+    cd "$workspace" &&
+      bazel build @qemu//:qemu-system-x86_64 @qemu//:qemu-system-x86_64_info &&
+      bazel test @qemu//:kvm_smoke_test
+  ) || exit 1
+done
 ```
 
-The example consumer registers Zig/musl and uses `file://%workspace%/..` for
-this registry, followed by `https://bcr.bazel.build` for dependencies. Other
+Both workspaces register Zig/musl and use a relative `file://` URL for this
+registry, followed by `https://bcr.bazel.build` for dependencies. Other
 consumers can declare `bazel_dep(name = "qemu", version = "11.1.2")`, add
 `--registry=file:///absolute/path/to/this/checkout` followed by the BCR URL,
 and supply their own Linux x86-64 C toolchain with a static libc.
 
-The smoke test checks version, accelerator, machine, device, and trace
-registration. It does not need `/dev/kvm` and does not boot a guest. To run a
+The smoke test checks version, KVM, device and trace registration. It also
+requires q35 and rejects i440FX in `minimal`; it requires both in `default`.
+It does not need `/dev/kvm` and does not boot a guest. To run a
 VM, supply `/dev/kvm` and use `-L /path/to/qemu/pc-bios` for the release's
 prebuilt firmware. The module does not install QEMU, build firmware, or package
 a runtime. Use `--distdir` to point Bazel at a locally downloaded archive if
@@ -36,13 +43,16 @@ apply.
 
 ## Configure the module
 
-The default `minimal` profile enables the i440fx machine and required devices,
-without Pixman or SLIRP and with `nop` tracing. To use the broader device set,
-Pixman, SLIRP, and `simple` tracing, put this in the root `MODULE.bazel`:
+With no configuration tag, `minimal` seeds Kconfig with `CONFIG_Q35=y`
+and enables only what it selects. Run it with `-machine q35`; the i440FX `pc`
+alias is not built. It does not enable Pixman or SLIRP and uses `nop` tracing.
+Choose `default` explicitly to use QEMU's own default
+x86-64 device configs (including q35 and i440FX), Pixman, SLIRP, and `simple`
+tracing:
 
 ```starlark
 qemu = use_extension("@qemu//bazel/config:targets.bzl", "qemu_targets")
-qemu.configure(profile = "consumer")
+qemu.configure(profile = "default")
 ```
 
 The root module can also supply its own `.mak` file as `devices`, choose
@@ -64,14 +74,13 @@ release.
 
 ## Validation and developer tools
 
-The default profile built with Bazel 9.3.2 and Zig/musl, and the registration
-smoke test passed. The registry and pre-reorganization builds produced
-byte-identical outputs in separate Bazel output bases with a shared disk cache:
+Both developer workspaces built with Bazel 9.3.2 and Zig/musl, and both passed
+`@qemu//:kvm_smoke_test`.
 
-| Output | SHA-256 |
-| --- | --- |
-| Static ELF | `d17d1f2b6fa7280764b317a8ae0b7a07ad854a0f52a94a26783c60aec062caec` |
-| Provenance manifest | `8425470a3562aa129792e9517e7e5a8e0b0fb52f4c83e7b71655513ebf17092b` |
+| Profile | Resolved device symbols | Stripped static ELF |
+| --- | ---: | ---: |
+| `minimal` | 57 | 6,670,104 bytes |
+| `default` | 227 | 29,569,928 bytes |
 
 The registration smoke test is not a KVM guest boot or a runtime-compatibility
 test. The musl build uses QEMU's `sigaltstack` coroutine backend rather than
@@ -80,7 +89,7 @@ test. The musl build uses QEMU's `sigaltstack` coroutine backend rather than
 Run `python3 -m unittest discover -s dev/tools` from the registry root to check
 the complete overlay pin map and the manifest verifier. Update the affected
 integrities in `source.json` whenever overlay files change. The BCR presubmit
-consumer under `overlay/bazel/presubmit/` uses the same toolchains as `dev/`.
+is configured to test both profiles with the developer workspace toolchains.
 
 Optional helpers in [`dev/tools/`](dev/tools/):
 

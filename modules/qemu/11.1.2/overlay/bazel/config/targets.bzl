@@ -8,7 +8,7 @@ device set with scripts/minikconf.py against the Kconfig tree.
 The result is the repository @qemu_targets, whose targets.bzl holds
 
     TARGETS = {"x86_64-softmmu": {"TARGET_NAME": "x86_64", ...,
-                                  "CONFIG_I440FX": "y", ...}}
+                                  "CONFIG_Q35": "y", ...}}
 
 and version.bzl the contents of the VERSION file (QEMU_VERSION), which
 BUILD files read to pick sources (qemu_target_library et al.) and to
@@ -190,8 +190,8 @@ def _qemu_targets_impl(mctx):
     tag = tags[0] if tags else None
     profile = tag.profile if tag else "minimal"
     target = "x86_64-softmmu"
-    default_devices = profile == "consumer"
-    devmak = "default" if default_devices else "minimal"
+    default_devices = profile == "default"
+    devmak = "default" if default_devices else "q35"
     devmak_path = _src(mctx, "configs/devices/{}/{}.mak".format(target, devmak))
     if tag and tag.devices:
         devmak_path = mctx.path(tag.devices)
@@ -202,13 +202,13 @@ def _qemu_targets_impl(mctx):
         fail("the Linux x86_64 overlay currently supports exactly accelerators = [\"kvm\"]")
     backends = tag.trace_backends if tag else ["profile-default"]
     if backends == ["profile-default"]:
-        backends = ["simple"] if profile == "consumer" else ["nop"]
+        backends = ["simple"] if profile == "default" else ["nop"]
     _check_choices("trace_backends", backends, ["simple", "log", "nop"])
     if not backends or ("nop" in backends and len(backends) != 1):
         fail("select at least one trace backend; nop must be used alone")
     features = tag.features if tag else ["profile-default"]
     if features == ["profile-default"]:
-        features = ["pixman", "slirp"] if profile == "consumer" else []
+        features = ["pixman", "slirp"] if profile == "default" else []
     _check_choices("features", features, ["pixman", "slirp"])
     settings = {
         "accelerators": accelerators,
@@ -269,7 +269,7 @@ qemu_targets = module_extension(
         "device_mode": attr.string(values = ["", "defconfig", "allnoconfig"]),
         "devices": attr.label(),
         "features": attr.string_list(default = ["profile-default"]),
-        "profile": attr.string(default = "minimal", values = ["minimal", "consumer"]),
+        "profile": attr.string(default = "minimal", values = ["minimal", "default"]),
         "trace_backends": attr.string_list(default = ["profile-default"]),
     })},
 )

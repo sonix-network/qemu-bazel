@@ -1,8 +1,8 @@
 bcr_test_module:
   module_path: bazel/presubmit
   tasks:
-    linux_x86_64:
-      name: Linux x86_64 static musl KVM QEMU smoke test
+    linux_x86_64_minimal: &linux_x86_64
+      name: Linux x86_64 static musl KVM QEMU smoke test (q35 only)
       platform: ubuntu2404
       bazel: 9.x
       build_flags:
@@ -28,3 +28,7 @@ bcr_test_module:
         - "@qemu//:qemu-system-x86_64_info"
       test_targets:
         - "@qemu//:kvm_smoke_test"
+    linux_x86_64_default:
+      <<: *linux_x86_64
+      name: Linux x86_64 static musl KVM QEMU smoke test (upstream devices)
+      working_directory: default

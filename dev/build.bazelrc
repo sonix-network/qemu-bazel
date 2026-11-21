@@ -1,0 +1,10 @@
+build --jobs=2
+build --platforms=//:linux_x86_64_musl
+build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+build --incompatible_strict_action_env
+build --action_env=PATH=/nonexistent
+build --host_action_env=PATH=/nonexistent
+
+test --extra_execution_platforms=@platforms//host:host,//:linux_x86_64_musl
+# Bazel's test and XML wrappers, not QEMU or its build, need PATH.
+test --test_env=PATH=/usr/bin:/bin

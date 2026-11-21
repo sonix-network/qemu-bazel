@@ -25,6 +25,29 @@ check_help() {
     esac
 }
 
-check_help -machine Standard\ PC
+check_machines() {
+    machines=$("$qemu" -machine help)
+    q35=absent
+    i440fx=absent
+    while read -r name rest; do
+        case "$name" in
+            q35) q35=present ;;
+            pc|pc-i440fx-*) i440fx=present ;;
+        esac
+    done <<EOF
+$machines
+EOF
+    if [ "$q35" != present ] || [ "$i440fx" != "$1" ]; then
+        printf 'Expected q35 present and i440FX %s; got:\n%s\n' "$1" "$machines" >&2
+        exit 1
+    fi
+}
+
+case "$2" in
+    q35-only) check_machines absent ;;
+    qemu-default) check_machines present ;;
+    custom) ;;
+    *) printf 'Unexpected device set: %s\n' "$2" >&2; exit 1 ;;
+esac
 check_help -device 'name "isa-serial"'
 check_help -trace handle_hmp_command
