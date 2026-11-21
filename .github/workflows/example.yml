@@ -22,5 +22,15 @@ jobs:
         with:
           persist-credentials: false
       - name: Build and test the UART guest on the native accelerator
+        if: runner.os == 'Linux'
         working-directory: example
         run: bazelisk test --test_strategy=standalone --test_output=all //:x86_64_uart_test
+      - name: Build and test the UART guest with WHPX
+        if: runner.os == 'Windows'
+        working-directory: example
+        shell: pwsh
+        run: |
+          $installBase = bazelisk info install_base | Select-Object -Last 1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $runtime = Join-Path $installBase 'embedded_tools/jdk/bin'
+          bazelisk test --test_strategy=standalone --test_output=all "--test_env=PATH=$runtime" //:x86_64_uart_test

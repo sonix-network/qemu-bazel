@@ -48,6 +48,7 @@ bcr_test_module:
         - --incompatible_strict_action_env
         - --action_env=PATH=
         - --host_action_env=PATH=
+        - --test_env=PATH=C:/nonexistent
       build_targets:
         - "@qemu//:qemu-system-x86_64"
       test_targets:
