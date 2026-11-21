@@ -59,5 +59,18 @@ class RegistryTest(unittest.TestCase):
                                  + f'\nlocal_path_override(module_name = "qemu", path = "{override}")\n')
 
 
+    def test_windows_zig_patch_matches_across_workspaces(self):
+        expected = (ROOT / "dev/zig-windows-params.patch").read_bytes()
+        for rel in (
+            "dev/default/zig-windows-params.patch",
+            "dev/rules_qemu/zig-windows-params.patch",
+            "example/zig-windows-params.patch",
+            "modules/qemu/11.1.2/overlay/bazel/presubmit/zig-windows-params.patch",
+            "modules/qemu/11.1.2/overlay/bazel/presubmit/default/zig-windows-params.patch",
+        ):
+            with self.subTest(path=rel):
+                self.assertEqual((ROOT / rel).read_bytes(), expected)
+
+
 if __name__ == "__main__":
     unittest.main()

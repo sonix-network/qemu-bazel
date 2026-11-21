@@ -141,8 +141,9 @@ adapter resolves the source-built emulator, firmware and accelerator for the
 execution platform. Linux uses pinned Zig/musl with KVM. Windows uses pinned
 Zig/MinGW with WHPX.
 
-Both profiles have q35 and `isa-serial` (COM1). The example uses `default`
-because `minimal` omits `isa-debug-exit`. QEMU loads the guest ELF via `-kernel`.
+Both profiles have q35, `isa-serial` (COM1), and `isa-debug-exit`. The example
+configures `default` to exercise the default device profile. QEMU loads the
+guest ELF via `-kernel`.
 Its PVH entry note points to a small 32-bit trampoline that enters long mode
 before calling Rust. The test requires exactly `hello from x86_64` on COM1
 and QEMU exit status 85 from `isa-debug-exit`.

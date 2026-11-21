@@ -5,3 +5,4 @@ common:windows --registry=file:///%workspace%/../..
 common:windows --registry=https://bcr.bazel.build
 
 import %workspace%/../build.bazelrc
+build:linux --extra_execution_platforms=//:linux_x86_64_musl
