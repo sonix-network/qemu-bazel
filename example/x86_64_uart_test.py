@@ -23,6 +23,10 @@ class UartTest(unittest.TestCase):
             self.skipTest(f"{accelerator.upper()} is unavailable on this host")
 
         serial = Path(os.environ["TEST_TMPDIR"]) / "com1.log"
+        environment = {"LC_ALL": "C"}
+        if os.name == "nt":
+            # The Windows crypto provider needs SystemRoot during QEMU startup.
+            environment["SystemRoot"] = os.environ["SystemRoot"]
         qemu = subprocess.run(
             [
                 locations.Rlocation(qemu), "-L", str(bios), "-machine", "q35",
@@ -32,7 +36,7 @@ class UartTest(unittest.TestCase):
                 "-device", "isa-debug-exit,iobase=0xf4,iosize=4",
                 "-kernel", locations.Rlocation(kernel),
             ],
-            env={"LC_ALL": "C"},
+            env=environment,
             capture_output=True,
             timeout=30,
         )

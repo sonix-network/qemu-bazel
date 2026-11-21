@@ -6,6 +6,7 @@ common:windows --registry=https://bcr.bazel.build
 
 import %workspace%/../dev/build.bazelrc
 build:linux --extra_execution_platforms=//:linux_x86_64_musl
+test:windows --test_env=SystemRoot
 
 # Rust's musl toolchain provides its own CRT objects. Link directly with
 # rust-lld; a C compiler driver can add a second set of CRT objects.
