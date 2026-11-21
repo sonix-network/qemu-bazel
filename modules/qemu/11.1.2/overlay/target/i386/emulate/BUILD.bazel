@@ -1,4 +1,23 @@
-# Placeholder until this directory is built with Bazel.
-load("//bazel:qemu.bzl", "qemu_package")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:qemu.bzl", "qemu_package", "qemu_target_source_set", "when")
+
+cc_library(
+    name = "headers",
+    hdrs = glob(["*.h"]),
+    visibility = ["//target/i386/whpx:__pkg__"],
+)
+
+qemu_target_source_set(
+    name = "emulate_ss",
+    arch = "i386",
+    when = [when("CONFIG_WHPX", [
+        "x86_decode.c",
+        "x86_emu.c",
+        "x86_flags.c",
+        "x86_helpers.c",
+        "x86_mmu.c",
+    ])],
+    deps = [":headers"],
+)
 
 qemu_package()

@@ -1,0 +1,29 @@
+load(":qemu_toolchain.bzl", "qemu_toolchain")
+
+toolchain_type(
+    name = "type",
+    visibility = ["//visibility:public"],
+)
+
+[
+    qemu_toolchain(
+        name = os + "_impl",
+        accelerator = accelerator,
+        emulator = "//:qemu-system-x86_64",
+        runtime_files = ["//:firmware"],
+    )
+    for os, accelerator in [("linux", "kvm"), ("windows", "whpx")]
+]
+
+[
+    toolchain(
+        name = os + "_x86_64",
+        exec_compatible_with = [
+            "@platforms//cpu:x86_64",
+            "@platforms//os:" + os,
+        ],
+        toolchain = ":" + os + "_impl",
+        toolchain_type = ":type",
+    )
+    for os in ["linux", "windows"]
+]

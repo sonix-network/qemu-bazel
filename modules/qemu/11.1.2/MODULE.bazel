@@ -30,6 +30,8 @@ python.toolchain(
 )
 use_repo(python, "python_3_12", "python_3_12_host")
 
+register_toolchains("//toolchain:linux_x86_64", "//toolchain:windows_x86_64")
+
 # Per-target configuration (config-target.h, Kconfig device selection).
 qemu_targets = use_extension("//bazel/config:targets.bzl", "qemu_targets")
 use_repo(qemu_targets, "qemu_targets")

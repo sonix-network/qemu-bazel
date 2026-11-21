@@ -4,6 +4,6 @@ exports_files([
     "hxtool.py",
     "kvm_smoke.sh",
     "source_provenance.json",
+    "firmware.py",
+    "whpx_smoke_test.py",
 ], visibility = ["//:__subpackages__"])
-
-exports_files(["firmware.py"], visibility = ["//:__pkg__"])

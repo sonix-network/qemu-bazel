@@ -17,12 +17,12 @@ def _runfile(ctx, file):
 
 def _qemu_runfiles_impl(ctx):
     qemu = ctx.toolchains[_QEMU_SYSTEM]
-    if (qemu.system_target, qemu.machine, qemu.accel) != ("x86_64-softmmu", "q35", "kvm"):
-        fail("expected the x86-64 q35/KVM system toolchain")
+    if (qemu.system_target, qemu.machine) != ("x86_64-softmmu", "q35"):
+        fail("expected the x86-64 q35 system toolchain")
     (guest,) = ctx.files.guest
     files = [qemu.qemu_system, qemu.system_data_anchor, guest]
     manifest = ctx.actions.declare_file(ctx.label.name + ".txt")
-    ctx.actions.write(manifest, "\n".join([_runfile(ctx, file) for file in files]) + "\n")
+    ctx.actions.write(manifest, "\n".join([qemu.accel] + [_runfile(ctx, file) for file in files]) + "\n")
     return DefaultInfo(
         files = depset([manifest]),
         runfiles = ctx.runfiles(

@@ -1,10 +1,16 @@
-build --jobs=2
-build --platforms=//:linux_x86_64_musl
+build:linux --jobs=2
+build:windows --jobs=4
+build:windows --incompatible_strict_action_env
+build:windows --action_env=PATH=
+build:windows --host_action_env=PATH=
+# Bazel's Windows test wrapper requires a nonempty PATH.
+test:windows --test_env=PATH=C:/nonexistent
+build:linux --platforms=//:linux_x86_64_musl
 build --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
-build --incompatible_strict_action_env
-build --action_env=PATH=/nonexistent
-build --host_action_env=PATH=/nonexistent
+build:linux --incompatible_strict_action_env
+build:linux --action_env=PATH=/nonexistent
+build:linux --host_action_env=PATH=/nonexistent
 
-test --extra_execution_platforms=@platforms//host:host,//:linux_x86_64_musl
+test:linux --extra_execution_platforms=@platforms//host:host,//:linux_x86_64_musl
 # Bazel's test and XML wrappers, not QEMU or its build, need PATH.
-test --test_env=PATH=/usr/bin:/bin
+test:linux --test_env=PATH=/usr/bin:/bin

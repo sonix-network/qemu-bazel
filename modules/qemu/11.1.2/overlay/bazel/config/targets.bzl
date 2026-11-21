@@ -15,7 +15,7 @@ BUILD files read to pick sources (qemu_target_library et al.) and to
 write <target>-config-target.h / -config-devices.h.
 """
 
-load("//bazel/config:config_host.bzl", "CONFIG_HOST")
+load("//bazel/config:config_host.bzl", "CONFIG_HOST", "CONFIG_HOST_WINDOWS")
 load("//bazel/config:options.bzl", "OPTIONS")
 
 # meson.build: disassemblers
@@ -178,9 +178,11 @@ _qemu_targets_repo = repository_rule(
 )
 
 def _qemu_targets_impl(mctx):
-    # Configuration runs on the Bazel host, independent of the target OS.
+    # Keep configuration evaluable on hosts where the emulator is not built.
+    windows = mctx.os.name.startswith("windows")
     host_runtime = mctx.path(Label("@python_3_12_host//:BUILD.bazel")).dirname
-    python = host_runtime.get_child("python.exe" if mctx.os.name.startswith("windows") else "python")
+    python = host_runtime.get_child("python.exe" if windows else "python")
+    accelerator = "whpx" if windows else "kvm"
     tags = []
     for mod in mctx.modules:
         if mod.tags.configure and not mod.is_root:
@@ -198,9 +200,9 @@ def _qemu_targets_impl(mctx):
         devmak_path = mctx.path(tag.devices)
     if tag and tag.device_mode:
         default_devices = tag.device_mode == "defconfig"
-    accelerators = tag.accelerators if tag else ["kvm"]
-    if accelerators != ["kvm"]:
-        fail("the Linux x86_64 overlay currently supports exactly accelerators = [\"kvm\"]")
+    accelerators = tag.accelerators if tag and tag.accelerators else [accelerator]
+    if accelerators != [accelerator]:
+        fail("this host requires accelerators = {}".format([accelerator]))
     backends = tag.trace_backends if tag else ["profile-default"]
     if backends == ["profile-default"]:
         backends = ["simple"] if profile == "default" else ["nop"]
@@ -213,7 +215,7 @@ def _qemu_targets_impl(mctx):
     _check_choices("features", features, ["pixman", "slirp"])
     settings = {
         "accelerators": accelerators,
-        "config_host": CONFIG_HOST | {
+        "config_host": (CONFIG_HOST_WINDOWS if windows else CONFIG_HOST) | {
             "CONFIG_PIXMAN": "pixman" in features,
             "CONFIG_SLIRP": "slirp" in features,
             "CONFIG_TRACE_SIMPLE": "simple" in backends,
@@ -222,7 +224,9 @@ def _qemu_targets_impl(mctx):
         "default_devices": default_devices,
         "device_set": str(tag.devices) if tag and tag.devices else devmak,
         "features": sorted(features),
-        "options": OPTIONS | {k: k in features for k in ["pixman", "slirp"]},
+        "options": OPTIONS | {k: k in features for k in ["pixman", "slirp"]} | {
+            "coroutine_backend": "windows" if windows else OPTIONS["coroutine_backend"],
+        },
         "profile": profile,
         "trace_backends": backends,
     }
@@ -232,7 +236,7 @@ def _qemu_targets_impl(mctx):
     settings["configure_args"] = [
         "--target-list=" + target,
         "--without-default-features",
-        "--enable-kvm",
+        "--enable-" + accelerator,
         "--disable-tcg",
         "--disable-tools",
         "--disable-docs",
@@ -268,7 +272,7 @@ qemu_targets = module_extension(
     os_dependent = True,
     arch_dependent = True,
     tag_classes = {"configure": tag_class(attrs = {
-        "accelerators": attr.string_list(default = ["kvm"]),
+        "accelerators": attr.string_list(),
         "device_mode": attr.string(values = ["", "defconfig", "allnoconfig"]),
         "devices": attr.label(),
         "features": attr.string_list(default = ["profile-default"]),

@@ -1,13 +1,15 @@
-load("@rules_qemu//qemu:qemu_system_toolchain.bzl", "qemu_system_toolchain")
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@qemu_rules_qemu_example//:source_toolchain.bzl", "source_toolchain")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@rules_rust//rust/private:rust.bzl", "rust_binary_without_process_wrapper")
 load(":qemu_runfiles.bzl", "qemu_runfiles")
 
-_HOST = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
+_LINUX = ["@platforms//cpu:x86_64", "@platforms//os:linux", "@zig_sdk//libc:musl"]
+_WINDOWS = ["@platforms//cpu:x86_64", "@platforms//os:windows"]
 _GUEST = ["@platforms//cpu:x86_64", "@platforms//os:none"]
 
 platform(
     name = "linux_x86_64_musl",
-    constraint_values = _HOST,
+    constraint_values = _LINUX,
 )
 
 platform(
@@ -15,7 +17,9 @@ platform(
     constraint_values = _GUEST,
 )
 
-rust_binary(
+# The guest is a single no_std crate. The pinned rules_rust bootstrap rule
+# can compile it without linking a native Rust process wrapper on Windows.
+rust_binary_without_process_wrapper(
     name = "hello_x86_64",
     srcs = ["hello_x86_64.rs"],
     compile_data = ["pvh.ld"],
@@ -29,38 +33,37 @@ rust_binary(
     target_compatible_with = _GUEST,
 )
 
-qemu_system_toolchain(
+source_toolchain(
     name = "qemu_x86_64_impl",
-    accel = "kvm",
-    machine = "q35",
     qemu_img = "@qemu//:qemu-img",
-    qemu_system = "@qemu//:qemu-system-x86_64",
     system_data = "@qemu//:firmware",
-    system_data_anchor = "@qemu//:firmware",
-    system_target = "x86_64-softmmu",
-    target_arch = "x86_64",
 )
 
-toolchain(
-    name = "qemu_x86_64_toolchain",
-    exec_compatible_with = _HOST,
-    target_compatible_with = _HOST,
-    toolchain = ":qemu_x86_64_impl",
-    toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
-)
+[
+    toolchain(
+        name = "qemu_" + os + "_x86_64",
+        exec_compatible_with = constraints,
+        target_compatible_with = constraints,
+        toolchain = ":qemu_x86_64_impl",
+        toolchain_type = "@rules_qemu//qemu:exec_toolchain_type",
+    )
+    for os, constraints in [("linux", _LINUX), ("windows", _WINDOWS)]
+]
 
 qemu_runfiles(
     name = "boot_inputs",
     guest = ":hello_x86_64",
 )
 
-rust_test(
+py_test(
     name = "x86_64_uart_test",
     size = "small",
-    srcs = ["x86_64_uart_test.rs"],
+    srcs = ["x86_64_uart_test.py"],
+    args = ["$(rlocationpath :boot_inputs)"],
     data = [":boot_inputs"],
-    edition = "2021",
-    rustc_env = {"BOOT_INPUTS": "$(rlocationpath :boot_inputs)"},
-    tags = ["manual", "requires-kvm"],
-    deps = ["@rules_rust//rust/runfiles"],
+    tags = ["manual"],
+    deps = [
+        "@qemu_rules_qemu_example//probe:accelerator",
+        "@rules_python//python/runfiles",
+    ],
 )
