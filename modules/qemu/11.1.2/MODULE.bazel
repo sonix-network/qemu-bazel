@@ -7,6 +7,7 @@ module(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
+bazel_dep(name = "package_metadata", version = "0.0.15")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "rules_python", version = "2.5.1")
@@ -14,8 +15,6 @@ bazel_dep(name = "rules_shell", version = "0.10.0")
 
 # Release versions of the libraries QEMU links. Stock BCR GLib's Linux
 # config.h assumes glibc; adapt its pinned build overlay for static musl.
-bazel_dep(name = "rules_license", version = "1.0.0")
-
 static_deps = use_extension("//bazel/deps:glib.bzl", "static_deps")
 use_repo(static_deps, "qemu_glib", "qemu_pcre2")
 

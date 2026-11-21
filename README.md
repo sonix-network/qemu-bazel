@@ -72,6 +72,20 @@ provenance. The manifest action rejects an ELF with `PT_INTERP` or `DT_NEEDED`.
 Optional patch and lock fields are empty or null for this unpatched registry
 release.
 
+## Package metadata and licensing
+
+The top-level QEMU Bazel package defaults to `@qemu//:package_metadata`
+([`package_metadata`](https://github.com/bazel-contrib/supply-chain) 0.0.15).
+It supplies `pkg:generic/qemu@11.1.2` and `GPL-2.0-only` with the upstream
+`COPYING` text for SBOM and license collectors. This is the license of the
+emulator as a whole, as described in the release's `LICENSE`, not an inventory
+of every source file. For example, the compiled sources `util/cutils.c` and
+`util/oslib-posix.c` carry their own MIT notices.
+
+The pinned GLib build overlay also uses `package_metadata`, retaining its
+separate `LGPL-2.1-or-later` declaration. This replaces the QEMU module's direct
+`rules_license` dependency; other dependencies may still use `rules_license`.
+
 ## Validation and developer tools
 
 Both developer workspaces built with Bazel 9.3.2 and Zig/musl, and both passed

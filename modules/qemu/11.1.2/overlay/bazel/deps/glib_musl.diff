@@ -1,9 +1,30 @@
 diff --git a/BUILD.bazel b/BUILD.bazel
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -17 +17 @@
+@@ -3 +3,2 @@
+-load("@rules_license//rules:license.bzl", "license")
++load("@package_metadata//licenses/rules:license.bzl", "license")
++load("@package_metadata//rules:package_metadata.bzl", "package_metadata")
+@@ -5 +6 @@
+-package(default_applicable_licenses = [":license"])
++package(default_package_metadata = [":package_metadata"])
+@@ -9,4 +10,2 @@
+-    package_name = "glib",
+-    license_kinds = ["@rules_license//licenses/spdx:LGPL-2.1-or-later"],
+-    license_text = "COPYING",
+-    package_url = "https://docs.gtk.org/glib/",
++    kind = "@package_metadata//licenses/spdx:LGPL-2.1-or-later",
++    text = "COPYING",
+@@ -17 +16,8 @@
 -UPSTREAM_VERSION = module_version().split(".bcr.", 1)[0]
 +UPSTREAM_VERSION = "2.84.4"
++
++package_metadata(
++    name = "package_metadata",
++    attributes = [":license"],
++    purl = "pkg:generic/glib@{}".format(UPSTREAM_VERSION),
++    visibility = ["//visibility:public"],
++)
 diff --git a/config.h-linux b/config.h-linux
 --- a/config.h-linux
 +++ b/config.h-linux
@@ -28,6 +49,9 @@ diff --git a/glib/BUILD.bazel b/glib/BUILD.bazel
 +++ b/glib/BUILD.bazel
 @@ -3,0 +4 @@
 +load("@qemu//bazel:python_gen.bzl", "python_gen")
+@@ -5 +6 @@
+-package(default_applicable_licenses = ["//:license"])
++package(default_package_metadata = ["//:package_metadata"])
 @@ -177 +178 @@
 -UPSTREAM_VERSION = module_version().split(".bcr.", 1)[0]
 +UPSTREAM_VERSION = "2.84.4"
@@ -55,11 +79,20 @@ diff --git a/glib/BUILD.bazel b/glib/BUILD.bazel
 @@ -353 +352 @@
 -        "@pcre2",
 +        "@qemu_pcre2//:pcre2",
+diff --git a/glib/gnulib/BUILD.bazel b/glib/gnulib/BUILD.bazel
+--- a/glib/gnulib/BUILD.bazel
++++ b/glib/gnulib/BUILD.bazel
+@@ -5 +5 @@
+-package(default_applicable_licenses = ["//:license"])
++package(default_package_metadata = ["//:package_metadata"])
 diff --git a/gmodule/BUILD.bazel b/gmodule/BUILD.bazel
 --- a/gmodule/BUILD.bazel
 +++ b/gmodule/BUILD.bazel
 @@ -2,0 +3 @@
 +load("@qemu//bazel:python_gen.bzl", "python_gen")
+@@ -4 +5 @@
+-package(default_applicable_licenses = ["//:license"])
++package(default_package_metadata = ["//:package_metadata"])
 @@ -6,38 +7 @@
 -# meson.build project-wide adds /utf-8 for MSVC.  Without it cl reads
 -# these sources in the system ANSI codepage and mangles non-ASCII

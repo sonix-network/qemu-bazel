@@ -2,7 +2,7 @@
     "integrity": "sha256-cxtWgeS7GL4xMjFXm479ApbFsBX6NtxTOHS2ObqDgBY=",
     "overlay": {
         ".bazelversion": "sha256-TZ39AvRjtIe9C/9oz5KSs2JrMcgf67VOiRHkk/ZHk9A=",
-        "BUILD.bazel": "sha256-P7gjKvkJEAB97YbQsWMfMBsnRwMxEQiV4NxoD0qjdvM=",
+        "BUILD.bazel": "sha256-hIywqT4DqpO5b/jeejxpArPFNaLKCwIEB8X/w69Qcwk=",
         "accel/BUILD.bazel": "sha256-z+PexfxMbmfl3udxVgFPZ9sJIBxklRSoXONfYMDVBGU=",
         "accel/hvf/BUILD.bazel": "sha256-nVPgBTR20fEv2+O1c68ylEVJFNd7smbEOxO69lAuo3o=",
         "accel/kvm/BUILD.bazel": "sha256-t47mIxvwVlENtLHrjjlTPkwfGvc9TfhEg1r3zHCAYys=",
@@ -27,7 +27,7 @@
         "bazel/config_h.bzl": "sha256-ksKLOMTpioVP0G4uTPQGzOfxqD4eLBXwXit8EOMzLI8=",
         "bazel/deps/BUILD.bazel": "sha256-yl6dw4ZgU42eQOk3OnHN58eqIndLtljqlroENBZiFjg=",
         "bazel/deps/glib.bzl": "sha256-dGITNX/OORug+tkd8vYaK+AxPUQb1kwdDQFwjq8mV9o=",
-        "bazel/deps/glib_musl.diff": "sha256-1pWd5H7Lfr7G9VKdPcp999ND2eqLx0iadQGb4W51Mes=",
+        "bazel/deps/glib_musl.diff": "sha256-pJFLhLrroEMmVrUEB0H/i8rAjjlDlPnui/pKbodirS8=",
         "bazel/deps/pcre2_copy.diff": "sha256-qXSGKwwpLarMTREDoXuHy6aILDXM8rXT3oM9iLTshxY=",
         "bazel/executable_script.bzl": "sha256-1ppgHmq4p1cwIpk45txxoPS79QTbiY4Ck9JO5K+RFYg=",
         "bazel/hxtool.py": "sha256-6f26M+lSudsfWltcY5cNDTj3XMUwxx7Ldqsr+1OYSD4=",

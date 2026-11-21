@@ -5,6 +5,9 @@
 # sources that live in the top directory, the libraries the executables
 # link (Meson's declare_dependency() objects) and the executables.
 
+load("@package_metadata//licenses/rules:license.bzl", "license")
+load("@package_metadata//purl:purl.bzl", "purl")
+load("@package_metadata//rules:package_metadata.bzl", "package_metadata")
 load("@qemu_targets//:settings.bzl", "SETTINGS")
 load("@qemu_targets//:targets.bzl", "TARGETS")
 load("@qemu_targets//:version.bzl", "QEMU_VERSION")
@@ -17,7 +20,23 @@ load("//bazel:info.bzl", "qemu_build_info")
 load("//bazel:python_gen.bzl", "python_gen")
 load("//bazel:qemu.bzl", "CONFIG_HOST", "QEMU_COPTS", "QEMU_DEFINES", "QEMU_LINKOPTS", "qemu_archive", "qemu_enabled", "qemu_library", "qemu_package", "qemu_source_set", "qemu_target_source_set", "qemu_user_source_set", "when")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_package_metadata = [":package_metadata"],
+    default_visibility = ["//visibility:public"],
+)
+
+package_metadata(
+    name = "package_metadata",
+    attributes = [":qemu_license"],
+    purl = purl.builder().type("generic").name("qemu").version(QEMU_VERSION).build(),
+    visibility = ["//visibility:public"],
+)
+
+license(
+    name = "qemu_license",
+    kind = "@package_metadata//licenses/spdx:GPL-2.0-only",
+    text = "COPYING",
+)
 
 exports_files([
     "Kconfig",
