@@ -1,0 +1,22 @@
+name: Bare-metal example build
+
+on:
+  push:
+    branches: [main]
+    paths: ['example/**', 'dev/build.bazelrc', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
+  pull_request:
+    paths: ['example/**', 'dev/build.bazelrc', 'modules/**', 'bazel_registry.json', '.github/workflows/example.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build the guest and QEMU runfiles without KVM
+        working-directory: example
+        run: bazelisk build //:x86_64_uart_test

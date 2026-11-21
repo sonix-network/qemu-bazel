@@ -69,6 +69,41 @@ The [toolchain example](dev/rules_qemu/) registers the source-built emulator,
 resolution without `/dev/kvm`. The QEMU module itself does not register
 `rules_qemu` toolchains or depend on that module.
 
+### Run a bare-metal x86-64 Rust binary
+
+From a Linux x86-64 host with Bazel 9.3.2 or Bazelisk:
+
+```sh
+cd example
+bazel build //:x86_64_uart_test  # Build-only check; no /dev/kvm needed.
+bazel test --test_strategy=local //:x86_64_uart_test  # Requires /dev/kvm.
+```
+
+[`example/`](example/) pins Rust 1.91.1 with `rules_rust`. A platform transition
+builds the `no_std` guest for `x86_64-unknown-none` with the pinned `rust-lld`.
+The test runner and source-built QEMU are native Linux x86-64 executables;
+QEMU uses pinned Zig/musl. The runner resolves the emulator and its data
+through a `rules_qemu` system toolchain; it does not use an installed QEMU.
+
+Both profiles have q35 and `isa-serial` (COM1). The example uses `default`
+because `minimal` omits `isa-debug-exit`. QEMU loads the guest ELF via `-kernel`.
+Its PVH entry note points to a small 32-bit trampoline that enters long mode
+before calling Rust. The test requires exactly `hello from x86_64` on COM1
+and QEMU exit status 85 from `isa-debug-exit`.
+
+PVH direct boot still uses firmware. The example stages `bios-256k.bin`
+(SeaBIOS) and `pvh.bin` (the PVH option ROM) from the SHA-256-pinned QEMU
+11.1.2 release and passes their runfiles directory via `-L`. It also stages
+`kvmvapic.bin`: QEMU requests this optional ROM and warns if it is missing,
+although the PVH guest does not need it. The example uses no host firmware
+installation, disk image, or network.
+
+The runtime test is tagged `manual` and `requires-kvm`: wildcard test runs
+and the build-only example presubmit do not boot it. Run it explicitly on
+an x86-64 host where the current user can open `/dev/kvm`. The local test
+strategy exposes the device to the test; the build actions remain sandboxed.
+There is no TCG fallback.
+
 ## Build provenance
 
 `@qemu//:qemu-system-x86_64_info` exports `QemuBuildInfo` (from

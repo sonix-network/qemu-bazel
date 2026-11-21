@@ -6,3 +6,5 @@ __pycache__/
 /dev/default/MODULE.bazel.lock
 /dev/rules_qemu/bazel-*
 /dev/rules_qemu/MODULE.bazel.lock
+/example/bazel-*
+/example/MODULE.bazel.lock
