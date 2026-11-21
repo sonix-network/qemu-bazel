@@ -4,3 +4,5 @@ __pycache__/
 /dev/MODULE.bazel.lock
 /dev/default/bazel-*
 /dev/default/MODULE.bazel.lock
+/dev/rules_qemu/bazel-*
+/dev/rules_qemu/MODULE.bazel.lock

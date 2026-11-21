@@ -45,6 +45,14 @@ exports_files([
     "trace-events",
 ])
 
+# Files from the pinned release, not a firmware build. Firmware carries its
+# own licenses, separate from the package metadata for the emulator.
+filegroup(
+    name = "pc-bios-files",
+    srcs = glob(["pc-bios/**"]),
+    package_metadata = [],
+)
+
 ###########################
 # Configuration headers   #
 ###########################

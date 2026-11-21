@@ -2,7 +2,7 @@
     "integrity": "sha256-cxtWgeS7GL4xMjFXm479ApbFsBX6NtxTOHS2ObqDgBY=",
     "overlay": {
         ".bazelversion": "sha256-TZ39AvRjtIe9C/9oz5KSs2JrMcgf67VOiRHkk/ZHk9A=",
-        "BUILD.bazel": "sha256-hIywqT4DqpO5b/jeejxpArPFNaLKCwIEB8X/w69Qcwk=",
+        "BUILD.bazel": "sha256-SlpMYT4xHoonheHMaNxY0wBmMjpLXIzwXenHX+8zD58=",
         "accel/BUILD.bazel": "sha256-z+PexfxMbmfl3udxVgFPZ9sJIBxklRSoXONfYMDVBGU=",
         "accel/hvf/BUILD.bazel": "sha256-nVPgBTR20fEv2+O1c68ylEVJFNd7smbEOxO69lAuo3o=",
         "accel/kvm/BUILD.bazel": "sha256-t47mIxvwVlENtLHrjjlTPkwfGvc9TfhEg1r3zHCAYys=",

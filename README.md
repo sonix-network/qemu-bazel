@@ -62,6 +62,13 @@ The root module can also supply its own `.mak` file as `devices`, choose
 Only `accelerators = ["kvm"]` is supported. Configuration applies to the whole
 module, not to individual executables.
 
+## Use with `rules_qemu`
+
+The [toolchain example](dev/rules_qemu/) registers the source-built emulator,
+`qemu-img`, and staged `pc-bios` data with `rules_qemu` 0.3.0. It tests toolchain
+resolution without `/dev/kvm`. The QEMU module itself does not register
+`rules_qemu` toolchains or depend on that module.
+
 ## Build provenance
 
 `@qemu//:qemu-system-x86_64_info` exports `QemuBuildInfo` (from
