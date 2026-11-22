@@ -84,8 +84,16 @@ foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
 bazel test "--test_env=PATH=$runtime" @qemu//:whpx_smoke_test
 ```
 
-The registration test runs version and help commands without launching a
-guest. A guest run requires the Windows Hypervisor Platform feature
+The BCR Windows presubmit builds `minimal` and `default` without executing
+QEMU. To reproduce those builds from a Windows checkout, run
+`./dev/tools/windows-presubmit.ps1 -Work <fresh-directory>` with Bazelisk
+on `PATH`. The work directory holds the vendored workspace, Bazel outputs,
+and the repository cache shared by both builds. Allow space for Zig and
+both builds. Use `-Registry` to point at a staged BCR checkout instead of
+this checkout's registry.
+
+The separate registration test runs version and help commands without
+launching a guest. A guest run requires the Windows Hypervisor Platform feature
 (`HypervisorPlatform`), a running hypervisor accessible to the emulator,
 and `-accel whpx`. Pass the `@qemu//:firmware` output directory to `-L`. Availability depends on the Windows environment. Issue #2 records
 the capability and partition checks on both a process-isolated container and
