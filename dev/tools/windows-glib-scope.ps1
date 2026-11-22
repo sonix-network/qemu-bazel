@@ -30,3 +30,5 @@ try {
     }
     Write-Host 'WINDOWS_GLIB_MINGW_SCOPE_PASSED'
 } finally { Pop-Location }
+# Do not return the last, intentionally failed Bazel exit to the CI wrapper.
+exit 0

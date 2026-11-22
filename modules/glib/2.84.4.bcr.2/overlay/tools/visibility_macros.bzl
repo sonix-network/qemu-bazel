@@ -3,6 +3,10 @@
 _PYTHON_TOOLCHAIN = "@rules_python//python:toolchain_type"
 
 def _visibility_macros_impl(ctx):
+    # The generator is a standalone script. Invoke it with the exec Python
+    # directly: py_binary bootstraps can need host Python or Bash (BCR #7467),
+    # while passing the py_binary output to Python fails for the native Windows
+    # launcher (BCR #10193). Neither launcher nor a shell is needed here.
     runtime = ctx.toolchains[_PYTHON_TOOLCHAIN].py3_runtime
     out = ctx.outputs.outs[0]
     src = ctx.file.src
