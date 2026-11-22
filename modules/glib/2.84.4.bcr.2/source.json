@@ -22,7 +22,7 @@
         "gobject/gobject.bzl": "sha256-yWryab/sV2zHow0BAb2grp+75L9Ce/TDlX0hHCLVECE=",
         "subprojects/gvdb/BUILD.bazel": "sha256-COUZr6Ov/1uX1oXxV9p17yz7aX29Czs9rOucTG2LWXQ=",
         "tools/BUILD.bazel": "sha256-Ew556Cz1GPlMuRSFoPorhOza0TSV7DDY6BzZo4dvZZU=",
-        "tools/visibility_macros.bzl": "sha256-XNS7k5xA506n9iOZ+nDdJRsrwSelS2DtO//p7uk9bb0="
+        "tools/visibility_macros.bzl": "sha256-oGSq7JUlQ67WfSrCrAqwoUl5ONgXpIxYdjf5U/ZoB1c="
     },
     "patch_strip": 0,
     "patches": {
