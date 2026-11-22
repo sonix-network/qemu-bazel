@@ -13,8 +13,7 @@ package(default_package_metadata = ["//:package_metadata"])
 # Bazel 7's MSVC toolchain also passes /DCOMPILER_MSVC by default, which
 # collides with the CompilerType enum in gio/glib-compile-resources.c.
 # Bazel 8 dropped it; glib reads _MSC_VER, never this, so drop it too.
-WIN32_COPTS = select({
-    "//:windows_clang": ["-finput-charset=UTF-8", "-UCOMPILER_MSVC"],
+MSVC_COPTS = select({
     "@platforms//os:windows": [
         "/utf-8",
         "/UCOMPILER_MSVC",
@@ -151,7 +150,7 @@ cc_library(
     copts = [
         "-I" + INCLUDE_PREFIX,
         "-I%s/glib" % (INCLUDE_PREFIX,),
-    ] + WIN32_COPTS,
+    ] + MSVC_COPTS,
     implementation_deps = [
         "//:config_h",
         "@libffi",
@@ -165,6 +164,11 @@ cc_library(
         "G_LOG_DOMAIN='\"GLib-GObject\"'",
         "GOBJECT_COMPILATION",
     ],
+    # BCR libffi's Windows x64 assembly rule requires an MSVC-style driver.
+    target_compatible_with = select({
+        "//:windows_clang": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = ["//glib"],
 )

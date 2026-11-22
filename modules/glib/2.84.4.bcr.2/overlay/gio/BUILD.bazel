@@ -15,8 +15,7 @@ package(default_package_metadata = ["//:package_metadata"])
 # Bazel 7's MSVC toolchain also passes /DCOMPILER_MSVC by default, which
 # collides with the CompilerType enum in gio/glib-compile-resources.c.
 # Bazel 8 dropped it; glib reads _MSC_VER, never this, so drop it too.
-WIN32_COPTS = select({
-    "//:windows_clang": ["-finput-charset=UTF-8", "-UCOMPILER_MSVC"],
+MSVC_COPTS = select({
     "@platforms//os:windows": [
         "/utf-8",
         "/UCOMPILER_MSVC",
@@ -714,7 +713,7 @@ objc_library(
         "-DLOCALSTATEDIR='\"\"'",
         "-DGIO_COMPILATION",
         "-fno-objc-arc",  # Disable Automatic Reference Counting, as GLib uses manual reference counting
-    ],
+    ] + MSVC_COPTS,
     implementation_deps = [
         ":gio_internal_textual_hdrs",
         "//:config_h",
@@ -807,7 +806,7 @@ cc_library(
         "-I%s/subprojects/gvdb" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s/gio" % (INCLUDE_PREFIX,),
-    ] + WIN32_COPTS,
+    ] + MSVC_COPTS,
     implementation_deps = [
         ":gio_internal_textual_hdrs",
         "//:config_h",
@@ -833,16 +832,6 @@ cc_library(
         ],
         # gio/meson.build's win32 platform_deps.  The UWP-only pieces
         # (shcore, runtimeobject) are left out along with the UWP sources.
-        "//:windows_clang": [
-            "-lshlwapi",
-            "-ldnsapi",
-            "-liphlpapi",
-            "-lws2_32",
-            "-ladvapi32",
-            "-lshell32",
-            "-lole32",
-            "-lwinhttp",
-        ],
         "@platforms//os:windows": [
             "-DEFAULTLIB:shlwapi.lib",
             "-DEFAULTLIB:dnsapi.lib",
@@ -868,6 +857,11 @@ cc_library(
         "LOCALSTATEDIR='\"\"'",
         "GIO_COMPILATION",
     ],
+    # GIO uses GObject, whose BCR libffi dependency needs MSVC-style assembly.
+    target_compatible_with = select({
+        "//:windows_clang": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//glib",
@@ -907,7 +901,7 @@ cc_binary(
         "-I%s/subprojects/gvdb" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s/gio" % (INCLUDE_PREFIX,),
-    ] + WIN32_COPTS,
+    ] + MSVC_COPTS,
     local_defines = [
         "G_LOG_DOMAIN='\"GLib-GIO\"'",
         "GIO_COMPILATION",

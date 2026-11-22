@@ -31,13 +31,10 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: example
         run: bazelisk test --test_strategy=standalone --test_output=all //:x86_64_uart_test
-      - name: Build GModule and GLib test binaries with MinGW
+      - name: Check the supported Windows MinGW GLib targets
         if: runner.os == 'Windows'
-        working-directory: example
-        # GObject and GIO require libffi, whose Windows BCR build uses MSVC assembly.
-        run: >-
-          bazelisk build
-          '@glib//gmodule' '@glib//glib/tests:unicode' '@glib//glib/tests:win32'
+        shell: pwsh
+        run: ./dev/tools/windows-glib-scope.ps1
       - name: Build and test the UART guest with WHPX
         if: runner.os == 'Windows'
         working-directory: example
