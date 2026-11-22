@@ -15,7 +15,8 @@ package(default_package_metadata = ["//:package_metadata"])
 # Bazel 7's MSVC toolchain also passes /DCOMPILER_MSVC by default, which
 # collides with the CompilerType enum in gio/glib-compile-resources.c.
 # Bazel 8 dropped it; glib reads _MSC_VER, never this, so drop it too.
-MSVC_COPTS = select({
+WIN32_COPTS = select({
+    "//:windows_clang": ["-finput-charset=UTF-8", "-UCOMPILER_MSVC"],
     "@platforms//os:windows": [
         "/utf-8",
         "/UCOMPILER_MSVC",
@@ -713,7 +714,7 @@ objc_library(
         "-DLOCALSTATEDIR='\"\"'",
         "-DGIO_COMPILATION",
         "-fno-objc-arc",  # Disable Automatic Reference Counting, as GLib uses manual reference counting
-    ] + MSVC_COPTS,
+    ],
     implementation_deps = [
         ":gio_internal_textual_hdrs",
         "//:config_h",
@@ -806,7 +807,7 @@ cc_library(
         "-I%s/subprojects/gvdb" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s/gio" % (INCLUDE_PREFIX,),
-    ] + MSVC_COPTS,
+    ] + WIN32_COPTS,
     implementation_deps = [
         ":gio_internal_textual_hdrs",
         "//:config_h",
@@ -832,6 +833,16 @@ cc_library(
         ],
         # gio/meson.build's win32 platform_deps.  The UWP-only pieces
         # (shcore, runtimeobject) are left out along with the UWP sources.
+        "//:windows_clang": [
+            "-lshlwapi",
+            "-ldnsapi",
+            "-liphlpapi",
+            "-lws2_32",
+            "-ladvapi32",
+            "-lshell32",
+            "-lole32",
+            "-lwinhttp",
+        ],
         "@platforms//os:windows": [
             "-DEFAULTLIB:shlwapi.lib",
             "-DEFAULTLIB:dnsapi.lib",
@@ -896,7 +907,7 @@ cc_binary(
         "-I%s/subprojects/gvdb" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s" % (INCLUDE_PREFIX,),
         "-I$(BINDIR)/%s/gio" % (INCLUDE_PREFIX,),
-    ] + MSVC_COPTS,
+    ] + WIN32_COPTS,
     local_defines = [
         "G_LOG_DOMAIN='\"GLib-GIO\"'",
         "GIO_COMPILATION",

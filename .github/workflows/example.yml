@@ -31,6 +31,13 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: example
         run: bazelisk test --test_strategy=standalone --test_output=all //:x86_64_uart_test
+      - name: Build GLib libraries and Windows test binaries with MinGW
+        if: runner.os == 'Windows'
+        working-directory: example
+        run: >-
+          bazelisk build
+          '@glib//gmodule' '@glib//gobject' '@glib//gio' '@glib//gio:glib_compile_resources'
+          '@glib//glib/tests:unicode' '@glib//glib/tests:win32'
       - name: Build and test the UART guest with WHPX
         if: runner.os == 'Windows'
         working-directory: example
