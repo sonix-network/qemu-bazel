@@ -31,6 +31,10 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: example
         run: bazelisk test --test_strategy=standalone --test_output=all //:x86_64_uart_test
+      - name: Check the supported Windows MinGW GLib targets
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./dev/tools/windows-glib-scope.ps1
       - name: Build vendored libslirp with the BCR Windows workspace
         if: runner.os == 'Windows'
         working-directory: example
