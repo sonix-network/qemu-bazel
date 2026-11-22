@@ -28,13 +28,16 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(source["strip_prefix"], f"qemu-{version}")
         self.assertEqual(source["integrity"], integrity(bytes.fromhex(provenance["source_sha256"])))
 
-    def test_overlay_pins_match_disk(self):
-        source = json.loads((RELEASE / "source.json").read_text())
-        overlay = RELEASE / "overlay"
-        files = sorted(p for p in overlay.rglob("*") if p.is_file() and "__pycache__" not in p.parts)
-        actual = {p.relative_to(overlay).as_posix(): integrity(hashlib.sha256(p.read_bytes()).digest())
-                  for p in files}
-        self.assertEqual(actual, source["overlay"])
+    def test_overlay_and_patch_pins_match_disk(self):
+        for path in sorted((ROOT / "modules").glob("*/*/source.json")):
+            source = json.loads(path.read_text())
+            for name in ("overlay", "patches"):
+                with self.subTest(module=path.parent, inputs=name):
+                    root = path.parent / name
+                    files = sorted(p for p in root.rglob("*") if p.is_file() and "__pycache__" not in p.parts)
+                    actual = {p.relative_to(root).as_posix(): integrity(hashlib.sha256(p.read_bytes()).digest())
+                              for p in files}
+                    self.assertEqual(actual, source.get(name, {}))
 
     def test_default_workspace_only_adds_the_profile_tag(self):
         dev = ROOT / "dev"

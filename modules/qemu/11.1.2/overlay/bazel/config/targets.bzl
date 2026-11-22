@@ -140,11 +140,12 @@ def _target_config(mctx, target, devmak, settings, python):
         cfg.update(devs)
         cfg["DEVICES"] = sorted(devs.keys())
 
-        # re-run when any Kconfig file minikconf read changes
-        deps = mctx.read(depfile).replace("\r", "").replace("\\\n", " ").replace("\n", " ")
-        for tok in deps.partition(":")[2].split(" "):
-            if (tok.startswith("/") or (len(tok) > 2 and tok[1:3] in (":/", ":\\"))) and not tok.endswith(":"):
-                mctx.watch(tok)
+        # minikconf writes one dependency per line. Keep spaces and Windows
+        # drive letters in paths rather than tokenizing them as a makefile.
+        for line in mctx.read(depfile).splitlines():
+            _, sep, path = line.partition(": ")
+            if sep and path:
+                mctx.watch(mctx.path(path))
     return cfg
 
 def _qemu_targets_repo_impl(rctx):
@@ -177,10 +178,10 @@ _qemu_targets_repo = repository_rule(
 )
 
 def _qemu_targets_impl(mctx):
+    # Keep configuration evaluable on hosts where the emulator is not built.
     windows = mctx.os.name.startswith("windows")
-    if (not windows and mctx.os.name != "linux") or mctx.os.arch not in ("amd64", "x86_64"):
-        fail("QEMU repository configuration requires a Linux or Windows x86_64 host")
-    python = mctx.path(Label("@qemu_windows_python//:python.exe") if windows else Label("@qemu_linux_python//:bin/python3"))
+    host_runtime = mctx.path(Label("@python_3_12_host//:BUILD.bazel")).dirname
+    python = host_runtime.get_child("python.exe" if windows else "python")
     accelerator = "whpx" if windows else "kvm"
     tags = []
     for mod in mctx.modules:
@@ -260,7 +261,7 @@ def _qemu_targets_impl(mctx):
         targets = json.encode(configs),
         version = version,
     )
-    return mctx.extension_metadata(reproducible = True)
+    return mctx.extension_metadata(reproducible = False)
 
 def _check_choices(field, values, allowed):
     if len({value: None for value in values}) != len(values) or any([value not in allowed for value in values]):

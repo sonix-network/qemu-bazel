@@ -7,15 +7,25 @@ load("//bazel:qemu.bzl", "qemu_enabled")
 # puts on every compile line: the generated headers (genh), the host
 # and TCG backend headers, linux-headers and glib.
 # Generators read some of these (block/block-gen.c).
-exports_files(glob(["**/*.h"]))
+exports_files(glob(["**/*.h"]), visibility = ["//:__subpackages__"])
+
+# Zig's libc elf.h can precede an -isystem QEMU include directory (in
+# particular on Bazel 8). Give the upstream QEMU header a virtual -I path
+# so #include "elf.h" has the same meaning as in QEMU's Meson build.
+cc_library(
+    name = "elf_header",
+    hdrs = ["elf.h"],
+    strip_include_prefix = "/include",
+)
 
 cc_library(
     name = "qemu",
-    hdrs = glob(["**/*.h"]),
+    hdrs = glob(["**/*.h"], exclude = ["elf.h"]),
     includes = ["."],
     textual_hdrs = glob(["**/*.inc"]),
-    visibility = ["//visibility:public"],
+    visibility = ["//:__subpackages__"],
     deps = [
+        ":elf_header",
         "//:genh",
         "//accel/tcg:headers",
         "//ebpf:headers",
@@ -28,7 +38,7 @@ cc_library(
         "//trace:headers",
         "//ui:genh",
         "//ui/shader:genh",
-        "@qemu_glib//glib",
-        "@qemu_glib//gmodule:headers",
+        "@glib//glib",
+        "@glib//gmodule:headers",
     ] + (["@pixman"] if qemu_enabled("pixman") else []),
 )

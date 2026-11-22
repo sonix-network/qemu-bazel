@@ -4,11 +4,19 @@ This is a standalone Bazel index registry in the Bazel Central Registry (BCR)
 layout. Bazel verifies and extracts the upstream QEMU 11.1.2 release and applies
 its checked-in, individually pinned overlay. No materialization step is needed.
 
+The first registry version for this release is `11.1.2`, in
+`modules/qemu/11.1.2/`. Published versions are immutable. For build-only fixes
+against the same upstream tarball, add a new registry version and directory
+using `11.1.2.bcr.1`, `11.1.2.bcr.2`, and so on. Keep the directory name,
+`module(version = ...)`, and the version listed in `metadata.json` in sync.
+Do not use `11.1.2-r0`: Bazel sorts it before `11.1.2`.
+
 **This downstream overlay is AI-generated. It is not part of upstream QEMU and
 is not supported by the QEMU project.** It builds a static Linux x86-64 system
-emulator with KVM and includes a Windows x86-64 overlay for WHPX. Both
-use accelerator-specific builds without TCG. The published module does not select or register a compiler.
-Build generators use pinned Python 3.12.
+emulator with KVM and a Windows x86-64 emulator with WHPX, both without TCG.
+It is not a replacement for QEMU’s upstream Meson build. The module does not
+register a compiler. The generators use pinned Python 3.12, and configuration
+uses rules_python’s managed host interpreter.
 
 ## Build and test
 
@@ -30,15 +38,19 @@ Both workspaces register Zig/musl and use a relative `file://` URL for this
 registry, followed by `https://bcr.bazel.build` for dependencies. Other
 consumers can declare `bazel_dep(name = "qemu", version = "11.1.2")`, add
 `--registry=file:///absolute/path/to/this/checkout` followed by the BCR URL,
-and supply their own Linux x86-64 C toolchain with a static libc.
+and supply their own Linux x86-64 C toolchain with a static libc. This
+checkout also carries the unpublished prerequisite BCR entries for GLib,
+PCRE2 and libslirp so the whole graph can be tested before their submissions
+land. They are normal `bazel_dep` dependencies, not private archive repos.
 
 The smoke test checks version, KVM, device and trace registration. It also
 requires q35 and rejects i440FX in `minimal`; it requires both in `default`.
 It does not need `/dev/kvm` and does not boot a guest. To run a
-VM, supply `/dev/kvm` and use `-L /path/to/qemu/pc-bios` for the release's
-prebuilt firmware. The module does not install QEMU, build firmware, or package
-a runtime. Use `--distdir` to point Bazel at a locally downloaded archive if
-needed; the [release and overlay pins](modules/qemu/11.1.2/source.json) still
+VM, supply `/dev/kvm` and build `@qemu//:firmware`. Pass that target's
+output directory to `-L`; it contains the release's prebuilt x86 PC boot
+ROMs and additional device ROMs selected by the configured Kconfig symbols.
+The module does not install QEMU or rebuild the firmware. Use `--distdir`
+to point Bazel at a locally downloaded archive if needed; the [release and overlay pins](modules/qemu/11.1.2/source.json) still
 apply.
 
 ## Windows x86-64
@@ -72,11 +84,18 @@ foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
 bazel test "--test_env=PATH=$runtime" @qemu//:whpx_smoke_test
 ```
 
-The registration test runs version and help commands without launching a
-guest. A guest run requires the Windows Hypervisor Platform feature
+The BCR Windows presubmit builds `minimal` and `default` without executing
+QEMU. To reproduce those builds from a Windows checkout, run
+`./dev/tools/windows-presubmit.ps1 -Work <fresh-directory>` with Bazelisk
+on `PATH`. The work directory holds the vendored workspace, Bazel outputs,
+and the repository cache shared by both builds. Allow space for Zig and
+both builds. Use `-Registry` to point at a staged BCR checkout instead of
+this checkout's registry.
+
+The separate registration test runs version and help commands without
+launching a guest. A guest run requires the Windows Hypervisor Platform feature
 (`HypervisorPlatform`), a running hypervisor accessible to the emulator,
-and `-accel whpx`. Use `-L` with the directory containing the release
-firmware. Availability depends on the Windows environment. Issue #2 records
+and `-accel whpx`. Pass the `@qemu//:firmware` output directory to `-L`. Availability depends on the Windows environment. Issue #2 records
 the capability and partition checks on both a process-isolated container and
 a HostProcess session.
 
@@ -148,12 +167,12 @@ Its PVH entry note points to a small 32-bit trampoline that enters long mode
 before calling Rust. The test requires exactly `hello from x86_64` on COM1
 and QEMU exit status 85 from `isa-debug-exit`.
 
-PVH direct boot still uses firmware. The example stages `bios-256k.bin`
-(SeaBIOS) and `pvh.bin` (the PVH option ROM) from the SHA-256-pinned QEMU
-11.1.2 release and passes their runfiles directory via `-L`. It also stages
-`kvmvapic.bin`: QEMU requests this optional ROM and warns if it is missing,
-although the PVH guest does not need it. The example uses no host firmware
-installation, disk image, or network.
+PVH direct boot still uses firmware. The example uses `@qemu//:firmware`
+as the toolchain's data directory and passes it via `-L`. Both profiles
+provide `bios-256k.bin` (SeaBIOS), `pvh.bin` (the PVH option ROM), and
+`kvmvapic.bin` (the optional VAPIC ROM) from the SHA-256-pinned QEMU release.
+The example needs no firmware copy rule, host installation, disk image,
+or network.
 
 The test is tagged `manual` and the example workflow invokes it explicitly.
 It reports a skip if it cannot open `/dev/kvm` on Linux or create a WHPX
@@ -180,9 +199,10 @@ emulator as a whole, as described in the release's `LICENSE`, not an inventory
 of every source file. For example, the compiled sources `util/cutils.c` and
 `util/oslib-posix.c` carry their own MIT notices.
 
-The pinned GLib build overlay also uses `package_metadata`, retaining its
-separate `LGPL-2.1-or-later` declaration. This replaces the QEMU module's direct
-`rules_license` dependency; other dependencies may still use `rules_license`.
+The separate GLib BCR revision uses `package_metadata`, retaining its own
+`LGPL-2.1-or-later` declaration with the upstream `COPYING` text. The GLib
+musl configuration and shell-free GLib and PCRE2 generator changes live in
+their respective module entries.
 
 This repository's own files (the Bazel overlay, registry metadata, developer
 tools and example) are licensed under the [Apache License 2.0](LICENSE). QEMU

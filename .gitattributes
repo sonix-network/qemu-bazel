@@ -1,3 +1,4 @@
-/modules/qemu/*/overlay/** text eol=lf
+# Registry integrities are over bytes, regardless of checkout OS.
+/modules/** text=auto eol=lf
 /dev/** text eol=lf
 /example/** text eol=lf

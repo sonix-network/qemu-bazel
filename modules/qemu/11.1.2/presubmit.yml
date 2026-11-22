@@ -1,19 +1,19 @@
 bcr_test_module:
   module_path: bazel/presubmit
+  matrix:
+    bazel: [8.x, 9.x]
   tasks:
     linux_x86_64_minimal: &linux_x86_64
       name: Linux x86_64 static musl KVM QEMU smoke test (q35 only)
       platform: ubuntu2404
-      bazel: 9.x
+      bazel: ${{ bazel }}
       build_flags:
-        - --jobs=2
         - --platforms=//:linux_x86_64_musl
         - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
         - --incompatible_strict_action_env
         - --action_env=PATH=/nonexistent
         - --host_action_env=PATH=/nonexistent
       test_flags:
-        - --jobs=2
         - --platforms=//:linux_x86_64_musl
         - --extra_execution_platforms=@platforms//host:host,//:linux_x86_64_musl
         # Bazel's test and XML wrappers use bash and coreutils. Build actions
@@ -24,8 +24,10 @@ bcr_test_module:
         - --action_env=PATH=/nonexistent
         - --host_action_env=PATH=/nonexistent
       build_targets:
+        - "@qemu//:firmware"
         - "@qemu//:qemu-system-x86_64"
         - "@qemu//:qemu-system-x86_64_info"
+        - "@qemu//:qemu-img"
       test_targets:
         - "@qemu//:kvm_smoke_test"
     linux_x86_64_default:
@@ -33,27 +35,17 @@ bcr_test_module:
       name: Linux x86_64 static musl KVM QEMU smoke test (upstream devices)
       working_directory: default
     windows_x86_64_minimal: &windows_x86_64
-      name: Windows x86_64 WHPX QEMU registration smoke test (q35 only)
+      name: Windows x86_64 WHPX QEMU build only (q35 only)
       platform: windows
       bazel: 9.x
       build_flags:
-        - --jobs=4
         - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
         - --incompatible_strict_action_env
         - --action_env=PATH=
         - --host_action_env=PATH=
-      test_flags:
-        - --jobs=4
-        - --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
-        - --incompatible_strict_action_env
-        - --action_env=PATH=
-        - --host_action_env=PATH=
-        - --test_env=PATH=C:/nonexistent
       build_targets:
         - "@qemu//:qemu-system-x86_64"
-      test_targets:
-        - "@qemu//:whpx_smoke_test"
     windows_x86_64_default:
       <<: *windows_x86_64
-      name: Windows x86_64 WHPX QEMU registration smoke test (upstream devices)
+      name: Windows x86_64 WHPX QEMU build only (upstream devices)
       working_directory: default

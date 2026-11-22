@@ -10,7 +10,7 @@ toolchain_type(
         name = os + "_impl",
         accelerator = accelerator,
         emulator = "//:qemu-system-x86_64",
-        runtime_files = ["//:pc-bios-files"],
+        runtime_files = ["//:firmware"],
     )
     for os, accelerator in [("linux", "kvm"), ("windows", "whpx")]
 ]

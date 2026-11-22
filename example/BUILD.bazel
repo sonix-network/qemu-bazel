@@ -1,4 +1,3 @@
-load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@qemu_rules_qemu_example//:source_toolchain.bzl", "source_toolchain")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_rust//rust/private:rust.bzl", "rust_binary_without_process_wrapper")
@@ -34,20 +33,10 @@ rust_binary_without_process_wrapper(
     target_compatible_with = _GUEST,
 )
 
-# QEMU still enters SeaBIOS, whose PVH option ROM reads the ELF entry from
-# fw_cfg. The in-kernel APIC can also register the VAPIC option ROM.
-copy_to_directory(
-    name = "pvh_bios",
-    srcs = ["@qemu//:pc-bios-files"],
-    include_external_repositories = [package_relative_label("@qemu//:pc-bios-files").workspace_name],
-    include_srcs_patterns = ["bios-256k.bin", "pvh.bin", "kvmvapic.bin"],
-    root_paths = ["pc-bios"],
-)
-
 source_toolchain(
     name = "qemu_x86_64_impl",
     qemu_img = "@qemu//:qemu-img",
-    system_data = ":pvh_bios",
+    system_data = "@qemu//:firmware",
 )
 
 [

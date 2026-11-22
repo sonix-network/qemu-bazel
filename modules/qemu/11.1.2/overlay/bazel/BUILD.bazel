@@ -3,8 +3,7 @@ exports_files([
     "capture_stdout.py",
     "hxtool.py",
     "kvm_smoke.sh",
-    "libslirp.BUILD.bazel",
     "source_provenance.json",
-])
-
-exports_files(["whpx_smoke_test.py"])
+    "firmware.py",
+    "whpx_smoke_test.py",
+], visibility = ["//:__subpackages__"])

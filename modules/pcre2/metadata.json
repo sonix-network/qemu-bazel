@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/PCRE2Project/pcre2",
+    "maintainers": [
+        {
+            "email": "jeremy.nimmer@tri.global",
+            "github": "jwnimmer-tri",
+            "name": "Jeremy Nimmer",
+            "github_user_id": 17596505
+        }
+    ],
+    "repository": [
+        "github:PCRE2Project/pcre2"
+    ],
+    "versions": [
+        "10.49.bcr.1"
+    ],
+    "yanked_versions": {}
+}

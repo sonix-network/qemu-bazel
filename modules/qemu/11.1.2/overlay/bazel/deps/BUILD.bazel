@@ -1,5 +1,0 @@
-exports_files([
-    "glib_musl.diff",
-    "glib_mingw.diff",
-    "pcre2_copy.diff",
-])

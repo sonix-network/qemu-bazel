@@ -1,7 +1,7 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//bazel:qemu.bzl", "qemu_package", "qemu_target_source_set", "when")
 
-exports_files(["trace-events"])
+exports_files(["trace-events"], visibility = ["//:__subpackages__"])
 
 # cpu.c includes the interface even when the accelerator is disabled.
 cc_library(
