@@ -4,6 +4,7 @@ bazel_dep(name = "qemu", version = "11.1.2")
 # Build-only coverage of GModule and Windows GLib test binaries in source CI.
 bazel_dep(name = "glib", version = "2.84.4.bcr.2", dev_dependency = True)
 bazel_dep(name = "rules_qemu", version = "0.3.0")
+bazel_dep(name = "libslirp", version = "4.9.5", dev_dependency = True)
 bazel_dep(name = "rules_rust", version = "0.72.0")
 bazel_dep(name = "rules_python", version = "2.5.1")
 bazel_dep(name = "platforms", version = "1.1.0")

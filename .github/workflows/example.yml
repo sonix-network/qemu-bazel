@@ -35,6 +35,24 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./dev/tools/windows-glib-scope.ps1
+      - name: Build vendored libslirp with the BCR Windows workspace
+        if: runner.os == 'Windows'
+        working-directory: example
+        shell: pwsh
+        env:
+          USE_BAZEL_VERSION: '9.3.2'
+        run: |
+          $vendor = Join-Path $env:RUNNER_TEMP 'slirp-vendor'
+          $registry = [Uri]::new((Resolve-Path ..).Path).AbsoluteUri
+          bazelisk vendor "--vendor_dir=$vendor" '--repo=@libslirp'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location (Join-Path $vendor 'libslirp+/bazel/presubmit')
+          try {
+            bazelisk build "--registry=$registry" --registry=https://bcr.bazel.build `
+              --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 --incompatible_strict_action_env `
+              --action_env=PATH= --host_action_env=PATH= '@libslirp//:libslirp'
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally { Pop-Location }
       - name: Build and test the UART guest with WHPX
         if: runner.os == 'Windows'
         working-directory: example
