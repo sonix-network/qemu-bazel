@@ -380,7 +380,7 @@ cc_library(
         "//block/monitor:block_ss",
         "//nbd:block_ss",
         "//scsi:block_ss",
-        "@zlib",
+        "//bazel:zlib",
     ],
 )
 

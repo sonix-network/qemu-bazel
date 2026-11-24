@@ -1,3 +1,5 @@
+load("//bazel:system_headers.bzl", "system_headers")
+
 exports_files([
     "build_manifest.py",
     "capture_stdout.py",
@@ -7,3 +9,16 @@ exports_files([
     "firmware.py",
     "whpx_smoke_test.py",
 ], visibility = ["//:__subpackages__"])
+
+config_setting(
+    name = "clang",
+    flag_values = {"@rules_cc//cc/compiler:compiler": "clang"},
+    visibility = ["//:__subpackages__"],
+)
+
+# Expose zlib headers via -isystem so zconf.h does not trigger QEMU's -Wundef.
+system_headers(
+    name = "zlib",
+    dep = "@zlib",
+    visibility = ["//:__subpackages__"],
+)

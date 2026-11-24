@@ -28,6 +28,9 @@ python_gen(
     outs = ["gdbstub-xml.c"],
     arguments = ["{inputs}"],
     capture_stdout = True,
+    # Upstream QEMU 11.1.2 scripts/feature_to_c.py:28 uses an unescaped \{
+    # in an f-string, which emits a SyntaxWarning under Python 3.12+.
+    python_args = ["-Wignore::SyntaxWarning"],
     script = "//scripts:feature_to_c.py",
 )
 
