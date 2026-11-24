@@ -42,7 +42,7 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 CONFIG_HOST = SETTINGS["config_host"]
 OPTIONS = SETTINGS["options"]
 
-# QEMU's common Linux x86_64 flags, limited to options shared by GCC and Clang.
+# QEMU's common Linux/Windows x86_64 flags, matching upstream meson.build.
 QEMU_COPTS = [
     "-std=gnu11",
     "-O2",
@@ -62,13 +62,11 @@ QEMU_COPTS = [
     "-Wformat-security",
     "-Wformat-y2k",
     "-Wignored-qualifiers",
-    "-Wimplicit-fallthrough",
     "-Wmissing-format-attribute",
     "-Wmissing-prototypes",
     "-Wnested-externs",
     "-Wold-style-definition",
     "-Wredundant-decls",
-    "-Wshadow",
     "-Wstrict-prototypes",
     "-Wtype-limits",
     "-Wundef",
@@ -77,7 +75,21 @@ QEMU_COPTS = [
     "-Wno-missing-include-dirs",
     "-Wno-psabi",
     "-Wno-shift-negative-value",
-]
+] + select({
+    # Upstream meson.build checks cc.has_argument() for each warning flag:
+    # Clang receives these -Wno-* flags and skips GCC-only =2/=local forms.
+    "//bazel:clang": [
+        "-Wno-gnu-variable-sized-type-not-at-end",
+        "-Wno-initializer-overrides",
+        "-Wno-string-plus-int",
+        "-Wno-tautological-type-limit-compare",
+        "-Wno-typedef-redefinition",
+    ],
+    "//conditions:default": [
+        "-Wimplicit-fallthrough=2",
+        "-Wshadow=local",
+    ],
+})
 
 # Link flags meson.build gives executables (b_asneeded, b_lundef and the
 # relro/now hardening). Keep executable options in the module itself.
@@ -198,12 +210,13 @@ def qemu_library(
     modules register themselves from constructors nothing references.
     """
     implicit = _QEMU_DEPS + (["//:qemuutil"] if qemuutil else [])
+    resolved_deps = ["//bazel:zlib" if d == "@zlib" else d for d in deps]
     cc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
         textual_hdrs = textual_hdrs,
-        deps = _unique_labels(deps + implicit),
+        deps = _unique_labels(resolved_deps + implicit),
         copts = QEMU_COPTS + copts,
         local_defines = QEMU_DEFINES + local_defines,
         alwayslink = alwayslink,

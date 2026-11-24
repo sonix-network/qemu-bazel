@@ -10,6 +10,7 @@ def _python_gen_impl(ctx):
     if runtime.interpreter == None:
         fail("QEMU generators need a file-backed Python toolchain")
     args = ctx.actions.args()
+    args.add_all(ctx.attr.python_args)
     outs = ctx.outputs.outs
     if ctx.attr.directory:
         if outs or ctx.attr.capture_stdout:
@@ -60,6 +61,7 @@ python_gen = rule(
         "deps": attr.label_list(allow_files = True),
         "directory": attr.string(),
         "outs": attr.output_list(),
+        "python_args": attr.string_list(),
         "script": attr.label(allow_single_file = True, mandatory = True),
         "src": attr.label(allow_single_file = True),
         "srcs": attr.label_list(allow_files = True),
